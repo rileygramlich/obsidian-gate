@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Settings · obsidian-agent</title>
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="/"><span class="logo">◈</span> obsidian-agent</a>
+    <div class="links">
+      <a href="/install">Install</a>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/settings" class="active">Settings</a>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">◐</button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap" style="padding-top:34px">
+  <h2>Settings</h2>
+  <p class="small muted">Everything here edits <code>~/.obsidian-agent/config.json</code> on this machine.</p>
+
+  <div class="card" style="margin-top:18px">
+    <h3>Agent connections</h3>
+    <p class="small muted">Each key is one agent. Rotating invalidates the old key immediately; the full key is shown once.</p>
+    <table>
+      <thead><tr><th>Agent</th><th>Vault</th><th>Key</th><th>Permissions</th><th>Last used</th><th></th></tr></thead>
+      <tbody id="agents"><tr><td colspan="6" class="small muted">Loading…</td></tr></tbody>
+    </table>
+    <div class="divider"></div>
+    <div class="grid cols-3" style="align-items:end">
+      <label class="field"><span>New agent name</span><input type="text" id="new-name" placeholder="Cursor" /></label>
+      <label class="field"><span>Vault</span><select id="new-vault"></select></label>
+      <div style="margin-bottom:14px"><button class="btn" onclick="addAgent()">Generate API key</button></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:18px">
+    <h3>Vaults</h3>
+    <table>
+      <thead><tr><th>Name</th><th>Path</th><th>Daily notes</th><th></th></tr></thead>
+      <tbody id="vaults"><tr><td colspan="4" class="small muted">Loading…</td></tr></tbody>
+    </table>
+    <div class="divider"></div>
+    <div class="grid cols-4" style="align-items:end">
+      <label class="field"><span>Name</span><input type="text" id="v-name" placeholder="Work" /></label>
+      <label class="field"><span>Absolute path</span><input type="text" id="v-path" placeholder="~/Obsidian/Work" /></label>
+      <label class="field"><span>Daily notes folder</span><input type="text" id="v-daily" value="01-Daily/" /></label>
+      <div style="margin-bottom:14px"><button class="btn" onclick="addVault()">Add vault</button></div>
+    </div>
+  </div>
+
+  <div class="grid cols-2" style="margin-top:18px">
+    <div class="card">
+      <h3>Server</h3>
+      <label class="field"><span>Port</span><input type="number" id="set-port" /></label>
+      <label class="field"><span>Max search results</span><input type="number" id="set-max" /></label>
+      <label class="field"><span>Log level</span>
+        <select id="set-log"><option>debug</option><option>info</option><option>warn</option><option>error</option></select>
+      </label>
+      <button class="btn secondary" onclick="saveSettings()">Save settings</button>
+      <p class="small muted" style="margin:10px 0 0">Port changes take effect on the next restart.</p>
+    </div>
+    <div class="card">
+      <h3>Subscription</h3>
+      <div id="plan" class="small muted">Loading…</div>
+      <div class="divider"></div>
+      <label class="field"><span>License key</span><input type="text" id="license-key" placeholder="oa_live_personal_xxxxxxxx" /></label>
+      <div style="display:flex; gap:10px; flex-wrap:wrap">
+        <button class="btn" onclick="activate()">Activate key</button>
+        <button class="btn secondary" onclick="portal()">Manage / cancel subscription</button>
+      </div>
+      <p class="small muted" style="margin:12px 0 0">Cancellation opens the Stripe Customer Portal. Access continues to the end of the billing period.</p>
+    </div>
+  </div>
+</main>
+
+<footer><div class="wrap"><span>◈ obsidian-agent</span><span class="links"><a href="/dashboard">Dashboard</a><a href="/install">Docs</a></span></div></footer>
+<div class="toast" id="toast"></div>
+
+<script>
+function toggleTheme() {
+  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem("oa-theme", next);
+}
+document.documentElement.dataset.theme =
+  localStorage.getItem("oa-theme") ||
+  (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+
+function toast(msg, isError) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = "toast show" + (isError ? " err" : "");
+  setTimeout(() => (el.className = "toast"), 5000);
+}
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function ago(iso) {
+  if (!iso) return "never";
+  const s = (Date.now() - Date.parse(iso)) / 1000;
+  if (s < 3600) return Math.max(1, Math.round(s / 60)) + "m ago";
+  if (s < 86400) return Math.round(s / 3600) + "h ago";
+  return new Date(iso).toLocaleDateString();
+}
+async function api(path, opts) {
+  const res = await fetch(path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+const post = (p, body) =>
+  api(p, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body || {}) });
+
+let allPermissions = ["read", "write", "search"];
+
+async function loadAgents() {
+  const { agents, all_permissions } = await api("/api/agents");
+  allPermissions = all_permissions;
+  document.getElementById("agents").innerHTML = agents.length
+    ? agents.map((a) => `
+      <tr>
+        <td><strong>${esc(a.name)}</strong></td>
+        <td>${esc(a.vault)}</td>
+        <td class="mono small">${esc(a.key_masked)}</td>
+        <td class="checks">${allPermissions.map((p) => `
+          <label><input type="checkbox" ${a.permissions.includes(p) ? "checked" : ""}
+            onchange="savePerms('${a.key_id}', this)" data-perm="${p}" data-key="${a.key_id}"> ${p}</label>`).join("")}</td>
+        <td class="small muted">${ago(a.last_used)}</td>
+        <td style="white-space:nowrap">
+          <button class="btn ghost sm" onclick="rotate('${a.key_id}')">Rotate</button>
+          <button class="btn danger sm" onclick="revoke('${a.key_id}','${esc(a.name)}')">Revoke</button>
+        </td>
+      </tr>`).join("")
+    : '<tr><td colspan="6" class="small muted">No agent connections yet.</td></tr>';
+}
+
+async function savePerms(id, el) {
+  const perms = [...document.querySelectorAll(`input[data-key="${id}"]`)]
+    .filter((i) => i.checked).map((i) => i.dataset.perm);
+  try { await post(`/api/agents/${id}/permissions`, { permissions: perms }); toast("Permissions updated."); }
+  catch (e) { toast(e.message, true); el.checked = !el.checked; }
+}
+
+async function rotate(id) {
+  if (!confirm("Rotate this key? The old key stops working immediately.")) return;
+  try {
+    const res = await post(`/api/agents/${id}/rotate`);
+    prompt("New API key — copy it now, it is not shown again:", res.key);
+    loadAgents();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function revoke(id, name) {
+  if (!confirm(`Revoke the key for "${name}"? That agent loses access immediately.`)) return;
+  try { await api(`/api/agents/${id}`, { method: "DELETE" }); toast("Key revoked."); loadAgents(); }
+  catch (e) { toast(e.message, true); }
+}
+
+async function addAgent() {
+  const name = document.getElementById("new-name").value.trim() || "New agent";
+  const vault = document.getElementById("new-vault").value;
+  try {
+    const res = await post("/api/agents", { name, vault, permissions: allPermissions });
+    prompt("API key for " + name + " — copy it now, it is not shown again:", res.key);
+    document.getElementById("new-name").value = "";
+    loadAgents();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function loadVaults() {
+  const { vaults } = await api("/api/vaults");
+  document.getElementById("vaults").innerHTML = vaults.length
+    ? vaults.map((v) => `
+      <tr>
+        <td><strong>${esc(v.name)}</strong></td>
+        <td class="mono small">${esc(v.path)}</td>
+        <td class="mono small">${esc(v.daily_notes_path || "(root)")}</td>
+        <td><button class="btn danger sm" onclick="removeVault('${esc(v.name)}')">Remove</button></td>
+      </tr>`).join("")
+    : '<tr><td colspan="4" class="small muted">No vaults. Add one below or run <code>npx obsidian-agent init</code>.</td></tr>';
+  document.getElementById("new-vault").innerHTML = vaults.map((v) => `<option>${esc(v.name)}</option>`).join("");
+}
+
+async function addVault() {
+  try {
+    await post("/api/vaults", {
+      name: document.getElementById("v-name").value.trim(),
+      path: document.getElementById("v-path").value.trim(),
+      daily_notes_path: document.getElementById("v-daily").value.trim(),
+    });
+    toast("Vault added.");
+    loadVaults();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function removeVault(name) {
+  if (!confirm(`Remove vault "${name}" from the connector? Your notes are not touched.`)) return;
+  try { await api("/api/vaults/" + encodeURIComponent(name), { method: "DELETE" }); loadVaults(); }
+  catch (e) { toast(e.message, true); }
+}
+
+async function loadSettings() {
+  const s = await api("/api/status");
+  document.getElementById("set-port").value = s.settings.port;
+  document.getElementById("set-max").value = s.settings.max_search_results;
+  document.getElementById("set-log").value = s.settings.log_level;
+  const l = s.license;
+  document.getElementById("plan").innerHTML =
+    `<div><strong style="color:var(--text)">${esc(l.label)}</strong> · ${esc(l.price)} · <span class="pill ${l.status === "inactive" ? "" : "ok"}">${esc(l.status)}</span></div>
+     <div>${l.usage.queries} queries this month${l.limits.queries_per_month ? " of " + l.limits.queries_per_month : " (unlimited)"} · ${l.usage.notes_created} notes created by agents</div>
+     <div>Last license check: ${l.checked_at ? new Date(l.checked_at).toLocaleString() : "never"}</div>`;
+}
+
+async function saveSettings() {
+  try {
+    await post("/api/settings", {
+      port: Number(document.getElementById("set-port").value),
+      max_search_results: Number(document.getElementById("set-max").value),
+      log_level: document.getElementById("set-log").value,
+    });
+    toast("Settings saved.");
+  } catch (e) { toast(e.message, true); }
+}
+
+async function activate() {
+  const key = document.getElementById("license-key").value.trim();
+  try {
+    const res = await post("/api/license", { key });
+    toast(res.status === "inactive" ? "That key could not be validated." : `Activated: ${res.label}.`, res.status === "inactive");
+    loadSettings();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function portal() {
+  try {
+    const res = await post("/api/portal");
+    if (res.url) window.location = res.url;
+  } catch (e) { toast(e.message, true); }
+}
+
+(async () => {
+  try { await Promise.all([loadAgents(), loadVaults(), loadSettings()]); }
+  catch (e) { toast("Cannot reach the local server — is `npx obsidian-agent` running?", true); }
+})();
+</script>
+</body>
+</html>

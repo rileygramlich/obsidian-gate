@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Obsidian Agent Connector — let your AI agents read and write your vault</title>
+<meta name="description" content="An MCP server that lets Claude Code, Codex, Cursor and any other MCP agent read, search, write and link notes in your Obsidian vault." />
+<link rel="stylesheet" href="/styles.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%237C3AED'/><text y='70' x='50' text-anchor='middle' font-size='58' fill='white' font-family='monospace'>◈</text></svg>" />
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="/"><span class="logo">◈</span> obsidian-agent</a>
+    <div class="links">
+      <a href="#features">Features</a>
+      <a href="#tools">Tools</a>
+      <a href="#pricing">Pricing</a>
+      <a href="/install">Install</a>
+      <a href="/dashboard">Dashboard</a>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">◐</button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap grid cols-2" style="align-items:center; gap:44px">
+    <div>
+      <span class="eyebrow">◈ Model Context Protocol</span>
+      <h1>Let your AI agents <span>read and write</span> your Obsidian vault</h1>
+      <p class="lede">
+        One MCP server. Nine tools. Your notes become a workspace any agent can use —
+        Claude Code, Codex, Cursor, or something you wrote yourself. Runs locally,
+        talks straight to the filesystem, and never sends a byte to the cloud.
+      </p>
+      <div class="cta-row">
+        <a class="btn" href="/install">Install now →</a>
+        <a class="btn secondary" href="#pricing">See pricing</a>
+        <span class="small muted">14-day trial · card required for full access</span>
+      </div>
+    </div>
+    <div class="terminal">
+      <div class="bar">
+        <i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i>
+        <span class="t">claude code — obsidian-agent</span>
+      </div>
+<pre><span class="c">$</span> npx obsidian-agent init
+<span class="o">✓ Vault registered: Personal → ~/Obsidian/Personal
+✓ Found 1,284 notes in 37 folders
+✓ API key generated: sk-4f2a…9c1e</span>
+
+<span class="p">you ›</span> what did I work on yesterday?
+
+<span class="c">⚒ get_daily_note(date: "yesterday")</span>
+<span class="c">⚒ search_notes(query: "MCP server")</span>
+<span class="o">Yesterday you drafted "MCP transport notes",
+linked it to [[Agent Architecture]], and left
+three open questions under ## Blockers.</span>
+
+<span class="p">you ›</span> summarize it into today's note
+
+<span class="c">⚒ create_note("01-Daily/2026-08-21.md")</span>
+<span class="c">⚒ create_link(from: today, to: "MCP transport notes")</span>
+<span class="o">✓ Written to your vault.</span>
+</pre>
+    </div>
+  </div>
+</header>
+
+<section class="section alt" id="features">
+  <div class="wrap">
+    <h2>Your knowledge base, agent-accessible</h2>
+    <p class="muted" style="max-width:620px">Everything runs on your machine against the real files. Obsidian keeps working exactly as it did — the agent is just another editor.</p>
+    <div class="grid cols-4" style="margin-top:30px">
+      <div class="card feature"><span class="icon">🔍</span><h3>Search any note</h3><p class="small muted">Full-text search across the whole vault, ranked, with line-level snippets the agent can quote.</p></div>
+      <div class="card feature"><span class="icon">✍️</span><h3>AI writes to your vault</h3><p class="small muted">Notes are created with your frontmatter template applied — they land as real markdown files.</p></div>
+      <div class="card feature"><span class="icon">🔗</span><h3>Links between notes</h3><p class="small muted">Agents add <code>[[wikilinks]]</code> and read backlinks, so the graph keeps growing as you work.</p></div>
+      <div class="card feature"><span class="icon">📅</span><h3>Daily note integration</h3><p class="small muted">"What did I do yesterday?" resolves to the right daily note, creating it when it doesn't exist.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="tools">
+  <div class="wrap grid cols-2" style="gap:44px; align-items:start">
+    <div>
+      <h2>Nine tools, one server</h2>
+      <p class="muted">Standard MCP, so any compliant client discovers them automatically. Notes are also exposed as resources under <code>obsidian://{vault}/{path}</code>.</p>
+      <pre class="code">{
+  "mcpServers": {
+    "obsidian": {
+      "command": "npx",
+      "args": ["obsidian-agent", "--mcp"]
+    }
+  }
+}</pre>
+      <p class="small muted">Drop that into <code>.mcp.json</code>, Claude Desktop, or Cursor. Prefer HTTP? Point the client at <code>http://localhost:3100/mcp</code> with your API key.</p>
+    </div>
+    <ul class="tool-list">
+      <li><code>list_notes</code><span>List notes in a vault folder</span></li>
+      <li><code>read_note</code><span>Full content + parsed frontmatter</span></li>
+      <li><code>search_notes</code><span>Full-text search across the vault</span></li>
+      <li><code>create_note</code><span>New note with frontmatter template</span></li>
+      <li><code>update_note</code><span>Overwrite or append to a note</span></li>
+      <li><code>get_backlinks</code><span>Every note linking to this one</span></li>
+      <li><code>get_tags</code><span>All tags across the vault, with counts</span></li>
+      <li><code>get_daily_note</code><span>Get or create the daily note</span></li>
+      <li><code>create_link</code><span>Add a [[wikilink]] between notes</span></li>
+    </ul>
+  </div>
+</section>
+
+<section class="section alt" id="pricing">
+  <div class="wrap">
+    <div class="center" style="margin-bottom:32px">
+      <h2>Pricing</h2>
+      <p class="muted">Free to try. Paid when you depend on it. 14-day trial on both plans.</p>
+    </div>
+    <div class="grid cols-3">
+      <div class="card plan">
+        <h3>Free</h3>
+        <div class="price">$0</div>
+        <ul>
+          <li>50 queries / month</li>
+          <li>1 vault</li>
+          <li>1 agent connection</li>
+          <li>All nine tools</li>
+        </ul>
+        <a class="btn secondary" href="/install" style="width:100%">Start free</a>
+      </div>
+      <div class="card plan featured">
+        <span class="tag">Most popular</span>
+        <h3>Personal</h3>
+        <div class="price">$19<small>/mo</small></div>
+        <ul>
+          <li>Unlimited queries</li>
+          <li>Up to 3 vaults</li>
+          <li>Unlimited agent connections</li>
+          <li>Priority support</li>
+        </ul>
+        <button class="btn" style="width:100%" onclick="checkout('personal')">Start 14-day trial</button>
+      </div>
+      <div class="card plan">
+        <h3>Team</h3>
+        <div class="price">$49<small>/mo</small></div>
+        <ul>
+          <li>Everything in Personal</li>
+          <li>Up to 3 vaults</li>
+          <li>5 agent connections</li>
+          <li>Shared config across the team</li>
+        </ul>
+        <button class="btn secondary" style="width:100%" onclick="checkout('team')">Start 14-day trial</button>
+      </div>
+    </div>
+    <p class="center small muted" style="margin-top:22px">
+      Already have a key? Activate it in <a href="/settings">Settings</a> or run <code>obsidian-agent license set &lt;key&gt;</code>.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap narrow center">
+    <h2>Three seconds to install</h2>
+    <div class="terminal" style="text-align:left; margin-top:20px">
+      <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="t">bash</span></div>
+<pre><span class="c">$</span> npx obsidian-agent init   <span class="c"># point it at your vault</span>
+<span class="c">$</span> npx obsidian-agent        <span class="c"># dashboard on :3100</span></pre>
+    </div>
+    <div class="cta-row" style="justify-content:center">
+      <a class="btn" href="/install">Full install guide →</a>
+      <a class="btn ghost" href="/dashboard">Open dashboard</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>◈ obsidian-agent · runs locally, your notes stay yours</span>
+    <span class="links">
+      <a href="https://github.com/obsidian-agent/obsidian-agent">GitHub</a>
+      <a href="/install">Docs</a>
+      <a href="https://github.com/obsidian-agent/obsidian-agent/releases">Changelog</a>
+    </span>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+<script>
+function toggleTheme() {
+  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem("oa-theme", next);
+}
+document.documentElement.dataset.theme =
+  localStorage.getItem("oa-theme") ||
+  (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+
+function toast(msg, isError) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = "toast show" + (isError ? " err" : "");
+  setTimeout(() => (el.className = "toast"), 4200);
+}
+
+async function checkout(plan) {
+  try {
+    const res = await fetch("/api/checkout", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ plan }),
+    });
+    const data = await res.json();
+    if (data.url) { window.location = data.url; return; }
+    toast(data.error || "Checkout is not configured on this machine.", true);
+  } catch (err) {
+    toast("Could not reach the local server. Is `npx obsidian-agent` running?", true);
+  }
+}
+</script>
+</body>
+</html>

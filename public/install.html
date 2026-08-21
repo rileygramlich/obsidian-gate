@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Install · obsidian-agent</title>
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="/"><span class="logo">◈</span> obsidian-agent</a>
+    <div class="links">
+      <a href="/install" class="active">Install</a>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/settings">Settings</a>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">◐</button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap narrow" style="padding-top:40px">
+  <h1 style="font-size:2.2rem">Install</h1>
+  <p class="lede">Two commands and a config file. Nothing to deploy — the server runs on your machine, against your vault.</p>
+
+  <h2 style="margin-top:36px">1 · Run the wizard</h2>
+  <div class="terminal">
+    <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="t">bash</span></div>
+<pre><span class="c">$</span> npx obsidian-agent init
+
+<span class="o">Path to your Obsidian vault:</span> <span class="p">~/Obsidian/Personal</span>
+<span class="o">Vault name [Personal]:</span>
+<span class="o">Daily notes folder [01-Daily/]:</span>
+<span class="o">Name this agent connection [Claude Code]:</span>
+
+<span class="o">✓ Vault registered: Personal → /home/you/Obsidian/Personal
+✓ Found 1,284 notes in 37 folders
+✓ API key generated: sk-4f2a…9c1e
+  (stored in ~/.obsidian-agent/config.json)</span></pre>
+  </div>
+  <p class="small muted">The wizard writes <code>~/.obsidian-agent/config.json</code>. That file is the whole configuration — vaults, keys, permissions, settings. No database, no account.</p>
+
+  <h2 style="margin-top:36px">2 · Point your agent at it</h2>
+  <p class="small muted">Recommended: stdio. Your MCP client launches the server itself, so there's nothing to keep running.</p>
+  <div class="copy-wrap">
+    <button class="btn secondary sm copy" onclick="copy('cfg-stdio')">Copy</button>
+    <pre class="code" id="cfg-stdio">{
+  "mcpServers": {
+    "obsidian": {
+      "command": "npx",
+      "args": ["obsidian-agent", "--mcp"]
+    }
+  }
+}</pre>
+  </div>
+  <p class="small muted">Or over HTTP, when the dashboard is already running and you want several agents on one server:</p>
+  <div class="copy-wrap">
+    <button class="btn secondary sm copy" onclick="copy('cfg-http')">Copy</button>
+    <pre class="code" id="cfg-http">…</pre>
+  </div>
+  <p class="small muted">Claude Code, one-liner: <code>claude mcp add obsidian -- npx obsidian-agent --mcp</code></p>
+
+  <h2 style="margin-top:36px">3 · Test the connection</h2>
+  <div class="terminal">
+    <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="t">bash</span></div>
+<pre><span class="c">$</span> npx obsidian-agent doctor
+<span class="o">✓ Config file present (~/.obsidian-agent/config.json)
+✓ Vault readable: /home/you/Obsidian/Personal (1284 notes)
+✓ Agent connections: 1
+✓ Tool list_notes works
+✓ Tool get_tags works
+✓ Tool search_notes works</span>
+
+<span class="c">$</span> npx @modelcontextprotocol/inspector npx obsidian-agent --mcp
+<span class="c"># inspector opens and lists all nine tools</span></pre>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <h3>Live check</h3>
+    <p class="small muted">Runs against the server serving this page.</p>
+    <button class="btn sm" onclick="testConnection()">Test connection</button>
+    <div id="test-out" class="small mono" style="margin-top:12px; color:var(--muted)">Not run yet.</div>
+  </div>
+
+  <h2 style="margin-top:36px">4 · Activate your license</h2>
+  <p class="small muted">The free tier gives you 50 queries a month, one vault, one agent — enough to try it. Paid keys unlock the rest.</p>
+  <div class="card">
+    <label class="field"><span>License key</span>
+      <input type="text" id="license-key" placeholder="oa_live_personal_xxxxxxxx" />
+    </label>
+    <div style="display:flex; gap:10px; flex-wrap:wrap">
+      <button class="btn" onclick="activate()">Activate</button>
+      <button class="btn secondary" onclick="checkout('personal')">Buy Personal · $19/mo</button>
+      <button class="btn secondary" onclick="checkout('team')">Buy Team · $49/mo</button>
+    </div>
+    <p class="small muted" style="margin:12px 0 0">Or from the terminal: <code>obsidian-agent license set &lt;key&gt;</code></p>
+  </div>
+
+  <h2 style="margin-top:36px">Or use the Obsidian plugin</h2>
+  <p class="small muted">
+    A community plugin that bundles this server is on the roadmap — one-click install from Obsidian's
+    Community Plugins browser. Until then the MCP server is the supported path, and it works with
+    every MCP client, not just Obsidian.
+  </p>
+</main>
+
+<footer><div class="wrap"><span>◈ obsidian-agent</span><span class="links"><a href="/dashboard">Dashboard</a><a href="https://github.com/obsidian-agent/obsidian-agent">GitHub</a></span></div></footer>
+<div class="toast" id="toast"></div>
+
+<script>
+function toggleTheme() {
+  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem("oa-theme", next);
+}
+document.documentElement.dataset.theme =
+  localStorage.getItem("oa-theme") ||
+  (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+
+function toast(msg, isError) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = "toast show" + (isError ? " err" : "");
+  setTimeout(() => (el.className = "toast"), 4600);
+}
+function copy(id) {
+  navigator.clipboard.writeText(document.getElementById(id).textContent).then(
+    () => toast("Copied to clipboard."),
+    () => toast("Could not copy.", true),
+  );
+}
+async function api(path, opts) {
+  const res = await fetch(path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+
+(async () => {
+  try {
+    const cfg = await api("/api/mcp-config");
+    document.getElementById("cfg-http").textContent = JSON.stringify(cfg.http, null, 2);
+  } catch {
+    document.getElementById("cfg-http").textContent =
+      '{ "mcpServers": { "obsidian": { "type": "http", "url": "http://localhost:3100/mcp", "headers": { "Authorization": "Bearer <your-key>" } } } }';
+  }
+  if (new URLSearchParams(location.search).get("checkout") === "success") {
+    toast("Payment complete — check your email for the license key, then activate it below.");
+  }
+})();
+
+async function testConnection() {
+  const out = document.getElementById("test-out");
+  out.textContent = "Running…";
+  try {
+    const status = await api("/api/status");
+    const vault = status.vaults[0];
+    out.innerHTML = vault
+      ? `✓ server on :${status.server.port}<br>✓ vault "${vault.name}" — ${vault.notes} notes<br>✓ ${status.connections} agent connection(s)<br>✓ plan: ${status.license.label}`
+      : "⚠ server is up, but no vault is configured. Run <code>npx obsidian-agent init</code>.";
+  } catch (e) {
+    out.textContent = "✗ " + e.message;
+  }
+}
+
+async function activate() {
+  const key = document.getElementById("license-key").value.trim();
+  if (!key) return toast("Paste a license key first.", true);
+  try {
+    const res = await api("/api/license", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ key }),
+    });
+    toast(res.status === "inactive" ? "That key could not be validated." : `Activated: ${res.label} plan.`, res.status === "inactive");
+  } catch (e) { toast(e.message, true); }
+}
+
+async function checkout(plan) {
+  try {
+    const data = await api("/api/checkout", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ plan }),
+    });
+    if (data.url) window.location = data.url;
+  } catch (e) { toast(e.message, true); }
+}
+</script>
+</body>
+</html>

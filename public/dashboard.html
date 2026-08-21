@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dashboard · obsidian-agent</title>
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="/"><span class="logo">◈</span> obsidian-agent</a>
+    <div class="links">
+      <a href="/install">Install</a>
+      <a href="/dashboard" class="active">Dashboard</a>
+      <a href="/settings">Settings</a>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">◐</button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap" style="padding-top:34px">
+  <div style="display:flex; align-items:baseline; gap:14px; flex-wrap:wrap">
+    <h2 style="margin:0">Dashboard</h2>
+    <span id="live" class="pill"><span class="dot"></span> checking…</span>
+    <span style="margin-left:auto; display:flex; gap:8px">
+      <button class="btn secondary sm" onclick="reindex()">Re-index vault</button>
+      <button class="btn ghost sm" onclick="refresh()">Refresh</button>
+    </span>
+  </div>
+
+  <div class="grid cols-4" style="margin-top:22px">
+    <div class="card stat"><span class="label">Notes indexed</span><span class="value" id="s-notes">—</span><span class="sub" id="s-folders">—</span></div>
+    <div class="card stat"><span class="label">Queries this month</span><span class="value" id="s-queries">—</span><span class="sub" id="s-quota">—</span></div>
+    <div class="card stat"><span class="label">Notes created by AI</span><span class="value" id="s-created">—</span><span class="sub">this month</span></div>
+    <div class="card stat"><span class="label">Plan</span><span class="value" id="s-plan" style="font-size:1.4rem">—</span><span class="sub" id="s-plan-sub">—</span></div>
+  </div>
+
+  <div class="grid cols-2" style="margin-top:18px">
+    <div class="card">
+      <h3>Vault status</h3>
+      <div id="vaults" class="small muted">Loading…</div>
+    </div>
+    <div class="card">
+      <h3>Connect an agent</h3>
+      <p class="small muted">Paste this into your MCP client config. The HTTP variant needs a key from Settings.</p>
+      <pre class="code" id="mcp-config">…</pre>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:18px">
+    <div style="display:flex; align-items:baseline">
+      <h3 style="margin:0">Recent agent activity</h3>
+      <span class="small muted" style="margin-left:auto">auto-refreshes every 5s</span>
+    </div>
+    <div class="divider"></div>
+    <div class="feed" id="feed"><span class="small muted">Loading…</span></div>
+  </div>
+
+  <div class="card" style="margin-top:18px">
+    <h3>Connected agents</h3>
+    <div class="divider"></div>
+    <table>
+      <thead><tr><th>Agent</th><th>Vault</th><th>Key</th><th>Permissions</th><th>Last used</th></tr></thead>
+      <tbody id="agents"><tr><td colspan="5" class="muted small">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</main>
+
+<footer><div class="wrap"><span>◈ obsidian-agent</span><span class="links"><a href="/settings">Settings</a><a href="/install">Docs</a></span></div></footer>
+<div class="toast" id="toast"></div>
+
+<script>
+function toggleTheme() {
+  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem("oa-theme", next);
+}
+document.documentElement.dataset.theme =
+  localStorage.getItem("oa-theme") ||
+  (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+
+function toast(msg, isError) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = "toast show" + (isError ? " err" : "");
+  setTimeout(() => (el.className = "toast"), 4200);
+}
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const fmtBytes = (b) => (b > 1e6 ? (b / 1e6).toFixed(1) + " MB" : Math.round(b / 1024) + " KB");
+function ago(iso) {
+  if (!iso) return "never";
+  const s = (Date.now() - Date.parse(iso)) / 1000;
+  if (s < 60) return Math.max(0, Math.round(s)) + "s ago";
+  if (s < 3600) return Math.round(s / 60) + "m ago";
+  if (s < 86400) return Math.round(s / 3600) + "h ago";
+  return new Date(iso).toLocaleDateString();
+}
+
+async function api(path, opts) {
+  const res = await fetch(path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+
+async function loadStatus() {
+  const d = await api("/api/status");
+  const totals = d.vaults.reduce((a, v) => ({ notes: a.notes + v.notes, folders: a.folders + v.folders }), { notes: 0, folders: 0 });
+  document.getElementById("s-notes").textContent = totals.notes.toLocaleString();
+  document.getElementById("s-folders").textContent = totals.folders + " folders · " + d.vaults.length + " vault(s)";
+  document.getElementById("s-queries").textContent = d.license.usage.queries.toLocaleString();
+  document.getElementById("s-quota").textContent = d.license.limits.queries_per_month
+    ? "of " + d.license.limits.queries_per_month + " on the free tier"
+    : "unlimited";
+  document.getElementById("s-created").textContent = d.license.usage.notes_created.toLocaleString();
+  document.getElementById("s-plan").textContent = d.license.label;
+  document.getElementById("s-plan-sub").textContent = d.license.price + " · " + d.license.status;
+
+  const live = document.getElementById("live");
+  live.className = "pill " + (d.active ? "ok" : "");
+  live.innerHTML = '<span class="dot ' + (d.active ? "live" : "idle") + '"></span> ' +
+    (d.active ? "agent active" : "idle") + " · port " + d.server.port;
+
+  document.getElementById("vaults").innerHTML = d.vaults.length
+    ? d.vaults.map((v) => `
+      <div style="margin-bottom:14px">
+        <div style="font-weight:600; color:var(--text)">${esc(v.name)}
+          ${v.error ? '<span class="pill err">unreachable</span>' : '<span class="pill ok">ready</span>'}</div>
+        <div class="mono" style="font-size:0.78rem">${esc(v.path)}</div>
+        <div>${v.notes} notes · ${fmtBytes(v.bytes)} · daily: <code>${esc(v.daily_notes_path || "vault root")}</code></div>
+        <div>Last indexed ${ago(v.last_indexed)}${v.error ? " · " + esc(v.error) : ""}</div>
+      </div>`).join("")
+    : 'No vault configured yet. Run <code>npx obsidian-agent init</code> or add one in <a href="/settings">Settings</a>.';
+}
+
+async function loadActivity() {
+  const { activity } = await api("/api/activity?limit=40");
+  const feed = document.getElementById("feed");
+  feed.innerHTML = activity.length
+    ? activity.map((e) => `
+      <div class="row">
+        <span class="ts">${new Date(e.ts).toLocaleString()}</span>
+        <span class="agent">${esc(e.agent)}</span>
+        <span class="what"><code>${esc(e.tool)}</code> ${esc(e.summary)}
+          ${e.ok ? "" : '<span class="pill err">error</span>'}</span>
+      </div>`).join("")
+    : '<span class="small muted">No agent activity yet. Connect an agent and ask it to read a note.</span>';
+}
+
+async function loadAgents() {
+  const { agents } = await api("/api/agents");
+  document.getElementById("agents").innerHTML = agents.length
+    ? agents.map((a) => `
+      <tr>
+        <td><strong>${esc(a.name)}</strong></td>
+        <td>${esc(a.vault)}</td>
+        <td class="mono small">${esc(a.key_masked)}</td>
+        <td>${a.permissions.map((p) => `<span class="pill purple">${esc(p)}</span>`).join(" ")}</td>
+        <td class="small muted">${ago(a.last_used)}</td>
+      </tr>`).join("")
+    : '<tr><td colspan="5" class="muted small">No agent connections. Create one in <a href="/settings">Settings</a>.</td></tr>';
+}
+
+async function loadMcpConfig() {
+  const cfg = await api("/api/mcp-config");
+  document.getElementById("mcp-config").textContent = JSON.stringify(cfg.stdio, null, 2);
+}
+
+async function reindex() {
+  try { await api("/api/reindex", { method: "POST" }); await loadStatus(); toast("Vault re-indexed."); }
+  catch (e) { toast(e.message, true); }
+}
+
+async function refresh() {
+  try { await Promise.all([loadStatus(), loadActivity(), loadAgents()]); }
+  catch (e) { toast(e.message, true); }
+}
+
+(async () => {
+  try { await Promise.all([loadStatus(), loadActivity(), loadAgents(), loadMcpConfig()]); }
+  catch (e) { toast("Cannot reach the local server — is `npx obsidian-agent` running? (" + e.message + ")", true); }
+  setInterval(() => loadActivity().catch(() => {}), 5000);
+  setInterval(() => loadStatus().catch(() => {}), 15000);
+})();
+</script>
+</body>
+</html>
