@@ -180,7 +180,7 @@ async function loadVaults() {
         <td class="mono small">${esc(v.daily_notes_path || "(root)")}</td>
         <td><button class="btn danger sm" onclick="removeVault('${esc(v.name)}')">Remove</button></td>
       </tr>`).join("")
-    : '<tr><td colspan="4" class="small muted">No vaults. Add one below or run <code>npx obsidian-agent init</code>.</td></tr>';
+    : '<tr><td colspan="4" class="small muted">No vaults. Add one below or run <code>npx obsidian-agent-connector init</code>.</td></tr>';
   document.getElementById("new-vault").innerHTML = vaults.map((v) => `<option>${esc(v.name)}</option>`).join("");
 }
 
@@ -243,7 +243,7 @@ async function portal() {
 
 (async () => {
   try { await Promise.all([loadAgents(), loadVaults(), loadSettings()]); }
-  catch (e) { toast("Cannot reach the local server — is `npx obsidian-agent` running?", true); }
+  catch (e) { toast("Cannot reach the local server — is `npx obsidian-agent-connector` running?", true); }
 })();
 </script>
 </body>

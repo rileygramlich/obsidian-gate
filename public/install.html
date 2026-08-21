@@ -26,7 +26,7 @@
   <h2 style="margin-top:36px">1 · Run the wizard</h2>
   <div class="terminal">
     <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="t">bash</span></div>
-<pre><span class="c">$</span> npx obsidian-agent init
+<pre><span class="c">$</span> npx obsidian-agent-connector init
 
 <span class="o">Path to your Obsidian vault:</span> <span class="p">~/Obsidian/Personal</span>
 <span class="o">Vault name [Personal]:</span>
@@ -58,12 +58,12 @@
     <button class="btn secondary sm copy" onclick="copy('cfg-http')">Copy</button>
     <pre class="code" id="cfg-http">…</pre>
   </div>
-  <p class="small muted">Claude Code, one-liner: <code>claude mcp add obsidian -- npx obsidian-agent --mcp</code></p>
+  <p class="small muted">Claude Code, one-liner: <code>claude mcp add obsidian -- npx obsidian-agent-connector --mcp</code></p>
 
   <h2 style="margin-top:36px">3 · Test the connection</h2>
   <div class="terminal">
     <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="t">bash</span></div>
-<pre><span class="c">$</span> npx obsidian-agent doctor
+<pre><span class="c">$</span> npx obsidian-agent-connector doctor
 <span class="o">✓ Config file present (~/.obsidian-agent/config.json)
 ✓ Vault readable: /home/you/Obsidian/Personal (1284 notes)
 ✓ Agent connections: 1
@@ -71,7 +71,7 @@
 ✓ Tool get_tags works
 ✓ Tool search_notes works</span>
 
-<span class="c">$</span> npx @modelcontextprotocol/inspector npx obsidian-agent --mcp
+<span class="c">$</span> npx @modelcontextprotocol/inspector npx obsidian-agent-connector --mcp
 <span class="c"># inspector opens and lists all nine tools</span></pre>
   </div>
   <div class="card" style="margin-top:18px">
@@ -156,7 +156,7 @@ async function testConnection() {
     const vault = status.vaults[0];
     out.innerHTML = vault
       ? `✓ server on :${status.server.port}<br>✓ vault "${vault.name}" — ${vault.notes} notes<br>✓ ${status.connections} agent connection(s)<br>✓ plan: ${status.license.label}`
-      : "⚠ server is up, but no vault is configured. Run <code>npx obsidian-agent init</code>.";
+      : "⚠ server is up, but no vault is configured. Run <code>npx obsidian-agent-connector init</code>.";
   } catch (e) {
     out.textContent = "✗ " + e.message;
   }

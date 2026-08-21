@@ -131,7 +131,7 @@ async function loadStatus() {
         <div>${v.notes} notes · ${fmtBytes(v.bytes)} · daily: <code>${esc(v.daily_notes_path || "vault root")}</code></div>
         <div>Last indexed ${ago(v.last_indexed)}${v.error ? " · " + esc(v.error) : ""}</div>
       </div>`).join("")
-    : 'No vault configured yet. Run <code>npx obsidian-agent init</code> or add one in <a href="/settings">Settings</a>.';
+    : 'No vault configured yet. Run <code>npx obsidian-agent-connector init</code> or add one in <a href="/settings">Settings</a>.';
 }
 
 async function loadActivity() {
@@ -179,7 +179,7 @@ async function refresh() {
 
 (async () => {
   try { await Promise.all([loadStatus(), loadActivity(), loadAgents(), loadMcpConfig()]); }
-  catch (e) { toast("Cannot reach the local server — is `npx obsidian-agent` running? (" + e.message + ")", true); }
+  catch (e) { toast("Cannot reach the local server — is `npx obsidian-agent-connector` running? (" + e.message + ")", true); }
   setInterval(() => loadActivity().catch(() => {}), 5000);
   setInterval(() => loadStatus().catch(() => {}), 15000);
 })();

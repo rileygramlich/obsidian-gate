@@ -44,7 +44,7 @@
         <i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i>
         <span class="t">claude code — obsidian-agent</span>
       </div>
-<pre><span class="c">$</span> npx obsidian-agent init
+<pre><span class="c">$</span> npx obsidian-agent-connector init
 <span class="o">✓ Vault registered: Personal → ~/Obsidian/Personal
 ✓ Found 1,284 notes in 37 folders
 ✓ API key generated: sk-4f2a…9c1e</span>
@@ -89,7 +89,7 @@ three open questions under ## Blockers.</span>
   "mcpServers": {
     "obsidian": {
       "command": "npx",
-      "args": ["obsidian-agent", "--mcp"]
+      "args": ["obsidian-agent-connector", "--mcp"]
     }
   }
 }</pre>
@@ -152,7 +152,7 @@ three open questions under ## Blockers.</span>
       </div>
     </div>
     <p class="center small muted" style="margin-top:22px">
-      Already have a key? Activate it in <a href="/settings">Settings</a> or run <code>obsidian-agent license set &lt;key&gt;</code>.
+      Already have a key? Activate it in <a href="/settings">Settings</a> or run <code>obsidian-agent-connector license set &lt;key&gt;</code>.
     </p>
   </div>
 </section>
@@ -162,8 +162,8 @@ three open questions under ## Blockers.</span>
     <h2>Three seconds to install</h2>
     <div class="terminal" style="text-align:left; margin-top:20px">
       <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="t">bash</span></div>
-<pre><span class="c">$</span> npx obsidian-agent init   <span class="c"># point it at your vault</span>
-<span class="c">$</span> npx obsidian-agent        <span class="c"># dashboard on :3100</span></pre>
+<pre><span class="c">$</span> npx obsidian-agent-connector init   <span class="c"># point it at your vault</span>
+<span class="c">$</span> npx obsidian-agent-connector        <span class="c"># dashboard on :3100</span></pre>
     </div>
     <div class="cta-row" style="justify-content:center">
       <a class="btn" href="/install">Full install guide →</a>
@@ -212,7 +212,7 @@ async function checkout(plan) {
     if (data.url) { window.location = data.url; return; }
     toast(data.error || "Checkout is not configured on this machine.", true);
   } catch (err) {
-    toast("Could not reach the local server. Is `npx obsidian-agent` running?", true);
+    toast("Could not reach the local server. Is `npx obsidian-agent-connector` running?", true);
   }
 }
 </script>
