@@ -1,79 +1,63 @@
-# Obsidian Agent Connector
+# Obsidian Gate
 
-**An MCP server that lets any AI agent read, search, write, and connect notes in your Obsidian vault.**
+**An MCP server that opens your Obsidian vault to any AI agent.**
 
 ```bash
-npx obsidian-agent-connector init   # point at your vault
-npx obsidian-agent-connector        # dashboard on :3100
+npx obsidian-gate init     # point at your vault
+npx obsidian-gate          # dashboard on :3100
 ```
 
-Claude Code, Codex, Cursor, Copilot — one line of config and your vault becomes an agent-accessible workspace. Runs entirely on your machine. No cloud, no database, no sync.
-
-[![npm](https://img.shields.io/npm/v/obsidian-agent-connector)](https://www.npmjs.com/package/obsidian-agent-connector) [![License: MIT](https://img.shields.io/badge/License-MIT-purple)](LICENSE)
+[![npm](https://img.shields.io/npm/v/obsidian-gate)](https://www.npmjs.com/package/obsidian-gate) [![License: MIT](https://img.shields.io/badge/License-MIT-purple)](LICENSE)
 
 ---
 
-## Why
+Your Obsidian vault is your second brain. Your AI agents should be able to use it.
 
-Obsidian is your second brain. Your AI agents should be able to use it.
+Claude Code, Codex, Cursor — one line of config and your vault becomes an agent-accessible workspace. Every note, every link, every tag. All local, all yours, no cloud.
 
-The MCP ecosystem is exploding in 2026 — developers want to plug their vaults into agents for:
+---
 
-- **Daily standups** — "What did I work on yesterday?" → agent reads the daily note
-- **Context gathering** — "Read my notes about project X before helping me code"
-- **Knowledge synthesis** — "Search my vault for everything on Kubernetes and summarize"
-- **Note taking** — "Save this debugging session to my vault as a new note"
-- **Cross-linking** — "Link my meeting notes to the related project notes"
+## Try It
 
-Before this, you had to build your own MCP server or pipe files manually. Now it's `npx` away.
+```bash
+# One command to set up
+npx obsidian-gate init
 
-## Tools
+# Start the dashboard
+npx obsidian-gate
+# → http://localhost:3100/dashboard
+```
 
-| Tool | What it does |
-|------|-------------|
-| `list_notes(path?)` | List notes and folders in a vault folder |
-| `read_note(path)` | Full content plus parsed frontmatter |
-| `search_notes(query, limit?)` | Ranked full-text search with line snippets |
-| `create_note(path, content, frontmatter?)` | New note, vault frontmatter template applied |
-| `update_note(path, content, mode?)` | Overwrite (or `append`) a note |
-| `get_backlinks(path)` | Every note linking here via `[[wikilink]]` or `.md` link |
-| `get_tags()` | All tags — frontmatter and inline — with counts |
-| `get_daily_note(date?)` | Get or create the daily note (accepts `today`, `yesterday`, `-1`, ISO date) |
-| `create_link(from, to, label?)` | Add a `[[wikilink]]` under `## Related` |
+That's it. Your agents can now read, search, and write to your vault.
 
-Notes are also exposed as MCP resources: `obsidian://{vault}/{path}`.
+---
 
 ## Quick Start
 
-### 1. Install & configure
+### 1. Point at your vault
 
 ```bash
-npx obsidian-agent-connector init
+npx obsidian-gate init
 ```
 
-Follow the prompts:
-- Your vault path → `/home/user/Obsidian/MyVault`
-- Vault name → `Personal`
-- Agent name → `Claude Code`
-
-You'll get an API key on completion. Save it — it's shown once.
+You'll be asked for your vault path. Paste it in, get an API key back.
 
 ### 2. Connect your agent
 
-**Claude Code** — add to your MCP config:
+**Claude Code** — drop this into your MCP config:
 
 ```json
 {
   "mcpServers": {
     "obsidian": {
       "command": "npx",
-      "args": ["obsidian-agent-connector", "--mcp"]
+      "args": ["obsidian-gate", "--mcp"]
     }
   }
 }
 ```
 
-**Or any MCP client** over HTTP:
+**Any MCP client** over HTTP:
 
 ```json
 {
@@ -87,101 +71,124 @@ You'll get an API key on completion. Save it — it's shown once.
 }
 ```
 
-### 3. Start the dashboard
+### 3. Ask your agent
 
-```bash
-npx obsidian-agent-connector
-# → Dashboard at http://localhost:3100/dashboard
-# → MCP over HTTP at http://localhost:3100/mcp
-# → MCP over stdio: npx obsidian-agent-connector --mcp
-```
+Try these:
 
-### 4. Run a health check
+| Prompt | What happens |
+|--------|-------------|
+| "What did I work on yesterday?" | Agent reads your daily note |
+| "Search my vault for Kubernetes notes" | Full-text search across every note |
+| "Save this debugging session to my vault" | Creates a new note with frontmatter |
+| "Link my meeting notes to the project notes" | Adds a `[[wikilink]]` |
 
-```bash
-npx obsidian-agent-connector doctor
-```
+---
 
-Verifies vault access, all 9 MCP tools, and your license status.
+## Tools — 9 Operations
 
-## CLI Reference
+| Tool | What it does |
+|------|-------------|
+| `list_notes(path?)` | List notes and folders in a vault folder |
+| `read_note(path)` | Full note content + parsed frontmatter |
+| `search_notes(query, limit?)` | Full-text search with ranked results and snippets |
+| `create_note(path, content, frontmatter?)` | New note with vault template frontmatter |
+| `update_note(path, content, mode?)` | Overwrite or append to a note |
+| `get_backlinks(path)` | Every note linking here via `[[wikilink]]` |
+| `get_tags()` | All tags — frontmatter and inline — with counts |
+| `get_daily_note(date?)` | Get or create the daily note (today, yesterday, -1, ISO) |
+| `create_link(from, to, label?)` | Add a `[[wikilink]]` under `## Related` |
+
+Notes are also exposed as MCP resources: `obsidian://{vault}/{path}`.
+
+---
+
+## CLI
 
 | Command | What it does |
 |---------|-------------|
 | `init` | Interactive setup wizard |
-| `serve` (default) | Dashboard + HTTP endpoint |
+| `serve` (default) | Dashboard + MCP HTTP on :3100 |
 | `--mcp` | Run as MCP server over stdio |
-| `doctor` | Verify vault, tools, and license |
+| `doctor` | Verify vault access and all 9 tools |
 | `keys list` | Show agent connections |
 | `keys new <name>` | Create a new API key |
 | `keys rotate <id>` | Rotate a key |
 | `keys revoke <id>` | Revoke a key |
-| `vault list` | Show configured vaults |
+| `vault list` | Configured vaults |
 | `vault add <name> <path>` | Add a vault |
 | `vault remove <name>` | Remove a vault |
-| `license status` | Show your plan & usage |
+| `license status` | Your plan and usage |
 | `license set <key>` | Activate a license key |
-| `activity` | Recent agent activity log |
-| `tools` | Print MCP tool definitions |
+| `activity` | Agent activity log |
+
+---
 
 ## Pricing
 
 | Tier | Price | What you get |
 |------|-------|-------------|
-| **Free** | $0 | 50 queries/month, 1 vault, 1 agent connection |
-| **Personal** | $19/mo | Unlimited queries, up to 3 vaults, unlimited agents |
-| **Team** | $49/mo | Everything in Personal, 5 vaults, shared config |
+| **Free** | $0 | 50 queries/month, 1 vault, 1 agent |
+| **Personal** | $19/mo | Unlimited queries, 3 vaults, unlimited agents |
+| **Team** | $49/mo | Everything in Personal + shared config, priority support |
 
-14-day free trial on paid plans — no risk. Cancel anytime.
+14-day free trial on paid plans. No risk. Cancel anytime.
+
+---
 
 ## Architecture
 
 ```
 ┌────────────┐     ┌──────────────────────┐     ┌──────────────┐
-│ AI Agent   │────▶│  obsidian-agent-      │────▶│  Obsidian    │
-│ (Claude,   │◀────│  connector            │◀────│  Vault       │
-│  Codex,    │     │                      │     │  (filesystem) │
-│  Cursor)   │     │  ┌─────┐  ┌───────┐  │     └──────────────┘
-└────────────┘     │  │MCP  │  │Web    │  │
-                   │  │stdio│  │Dshbrd │  │
-                   │  └─────┘  └───────┘  │
-                   └──────────────────────┘
+│ AI Agent   │────▶│   obsidian-gate      │────▶│  Obsidian    │
+│ (Claude,   │◀────│   (MCP Server)       │◀────│  Vault       │
+│  Codex,    │     │                      │     │  (files)     │
+│  Cursor)   │     │  stdio ─ dashboard   │     └──────────────┘
+└────────────┘     └──────────────────────┘
 ```
 
-- **Every byte is local** — no cloud, no servers, no sync
-- **Config lives in** `~/.obsidian-agent/config.json` (mode 0600)
-- **API keys are local secrets** — you own the whole stack
-- **Activity log** — JSONL file tracks every agent action
+- **All local.** Every byte lives on your machine. No cloud, no servers, no sync.
+- **Config in** `~/.obsidian-gate/config.json` (mode 0600)
+- **API keys** are local secrets. You own the stack.
+- **Activity log** tracks every agent action in JSONL.
 
-## What This Is Not
+---
 
-This is NOT an Obsidian plugin. It's a standalone MCP server that runs alongside Obsidian, not inside it. A community plugin for one-click install is planned for v2.
+## What Gate Is Not
 
-This is NOT a sync engine. It reads and writes to your vault directory directly. Obsidian's own sync handles the rest.
+- ❌ Not an Obsidian plugin (but a community plugin is planned)
+- ❌ Not a sync engine (reads/writes your vault directory directly)
+- ❌ Not a note editor (Obsidian is better at that)
+- ❌ Not a cloud service (runs entirely on your machine)
 
-This is NOT a note editor. The dashboard shows agent activity and status — it doesn't let you edit notes. Obsidian is better at that.
+It's one small thing done well: an MCP server for your vault.
 
-## Development
-
-```bash
-git clone https://github.com/rileygramlich/obsidian-agent-connector.git
-cd obsidian-agent-connector
-npm install
-npm run build     # compile TypeScript → dist/
-npm run dev       # hot-reload development
-```
+---
 
 ## Roadmap
 
 - [x] MCP server with 9 tools
-- [x] Local dashboard with activity logs
-- [x] API key authentication
+- [x] Local dashboard + activity log
+- [x] API key auth + permissions
 - [x] Stripe licensing (free + paid tiers)
 - [ ] Obsidian community plugin (one-click install)
-- [ ] Agent write-back with LLM-generated frontmatter
-- [ ] Auto-tagging based on vault content
-- [ ] "What changed today" agent digest
+- [ ] Agent write-back with LLM frontmatter
+- [ ] Auto-tagging from vault content
+- [ ] Daily digest: what changed in your vault
 
-## License
+---
 
-MIT — build on it, ship it, sell it.
+## Development
+
+```bash
+git clone https://github.com/rileygramlich/obsidian-gate.git
+cd obsidian-gate
+npm install
+npm run build     # compile TypeScript → dist/
+npm run dev       # hot-reload with tsx
+```
+
+---
+
+Built by [Riley G.](https://github.com/rileygramlich) — inspired by the Marc Lou playbook: ship fast, free tier, zero ad spend, build in public.
+
+**MIT** — build on it, ship it, sell it.

@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Dashboard · obsidian-agent</title>
+<title>Dashboard · obsidian-gate</title>
 <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
 <nav>
   <div class="wrap">
-    <a class="brand" href="/"><span class="logo">◈</span> obsidian-agent</a>
+    <a class="brand" href="/"><span class="logo">◈</span> obsidian-gate</a>
     <div class="links">
       <a href="/install">Install</a>
       <a href="/dashboard" class="active">Dashboard</a>
@@ -67,7 +67,7 @@
   </div>
 </main>
 
-<footer><div class="wrap"><span>◈ obsidian-agent</span><span class="links"><a href="/settings">Settings</a><a href="/install">Docs</a></span></div></footer>
+<footer><div class="wrap"><span>◈ obsidian-gate</span><span class="links"><a href="/settings">Settings</a><a href="/install">Docs</a></span></div></footer>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -131,7 +131,7 @@ async function loadStatus() {
         <div>${v.notes} notes · ${fmtBytes(v.bytes)} · daily: <code>${esc(v.daily_notes_path || "vault root")}</code></div>
         <div>Last indexed ${ago(v.last_indexed)}${v.error ? " · " + esc(v.error) : ""}</div>
       </div>`).join("")
-    : 'No vault configured yet. Run <code>npx obsidian-agent-connector init</code> or add one in <a href="/settings">Settings</a>.';
+    : 'No vault configured yet. Run <code>npx obsidian-gate init</code> or add one in <a href="/settings">Settings</a>.';
 }
 
 async function loadActivity() {
@@ -179,7 +179,7 @@ async function refresh() {
 
 (async () => {
   try { await Promise.all([loadStatus(), loadActivity(), loadAgents(), loadMcpConfig()]); }
-  catch (e) { toast("Cannot reach the local server — is `npx obsidian-agent-connector` running? (" + e.message + ")", true); }
+  catch (e) { toast("Cannot reach the local server — is `npx obsidian-gate` running? (" + e.message + ")", true); }
   setInterval(() => loadActivity().catch(() => {}), 5000);
   setInterval(() => loadStatus().catch(() => {}), 15000);
 })();

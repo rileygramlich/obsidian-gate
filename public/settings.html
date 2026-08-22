@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Settings · obsidian-agent</title>
+<title>Settings · obsidian-gate</title>
 <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
 <nav>
   <div class="wrap">
-    <a class="brand" href="/"><span class="logo">◈</span> obsidian-agent</a>
+    <a class="brand" href="/"><span class="logo">◈</span> obsidian-gate</a>
     <div class="links">
       <a href="/install">Install</a>
       <a href="/dashboard">Dashboard</a>
@@ -21,7 +21,7 @@
 
 <main class="wrap" style="padding-top:34px">
   <h2>Settings</h2>
-  <p class="small muted">Everything here edits <code>~/.obsidian-agent/config.json</code> on this machine.</p>
+  <p class="small muted">Everything here edits <code>~/.obsidian-gate/config.json</code> on this machine.</p>
 
   <div class="card" style="margin-top:18px">
     <h3>Agent connections</h3>
@@ -78,7 +78,7 @@
   </div>
 </main>
 
-<footer><div class="wrap"><span>◈ obsidian-agent</span><span class="links"><a href="/dashboard">Dashboard</a><a href="/install">Docs</a></span></div></footer>
+<footer><div class="wrap"><span>◈ obsidian-gate</span><span class="links"><a href="/dashboard">Dashboard</a><a href="/install">Docs</a></span></div></footer>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -180,7 +180,7 @@ async function loadVaults() {
         <td class="mono small">${esc(v.daily_notes_path || "(root)")}</td>
         <td><button class="btn danger sm" onclick="removeVault('${esc(v.name)}')">Remove</button></td>
       </tr>`).join("")
-    : '<tr><td colspan="4" class="small muted">No vaults. Add one below or run <code>npx obsidian-agent-connector init</code>.</td></tr>';
+    : '<tr><td colspan="4" class="small muted">No vaults. Add one below or run <code>npx obsidian-gate init</code>.</td></tr>';
   document.getElementById("new-vault").innerHTML = vaults.map((v) => `<option>${esc(v.name)}</option>`).join("");
 }
 
@@ -243,7 +243,7 @@ async function portal() {
 
 (async () => {
   try { await Promise.all([loadAgents(), loadVaults(), loadSettings()]); }
-  catch (e) { toast("Cannot reach the local server — is `npx obsidian-agent-connector` running?", true); }
+  catch (e) { toast("Cannot reach the local server — is `npx obsidian-gate` running?", true); }
 })();
 </script>
 </body>

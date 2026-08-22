@@ -1,11 +1,11 @@
 {
-  "name": "obsidian-agent-connector",
+  "name": "obsidian-gate",
   "version": "1.0.0",
   "description": "MCP server that lets any AI agent read, search, write, and connect notes in your Obsidian vault.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "obsidian-agent": "dist/index.js"
+    "obsidian-gate": "dist/index.js"
   },
   "files": [
     "dist",
@@ -41,11 +41,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rileygramlich/obsidian-agent-connector.git"
+    "url": "git+https://github.com/rileygramlich/obsidian-gate.git"
   },
-  "homepage": "https://github.com/rileygramlich/obsidian-agent-connector#readme",
+  "homepage": "https://github.com/rileygramlich/obsidian-gate#readme",
   "bugs": {
-    "url": "https://github.com/rileygramlich/obsidian-agent-connector/issues"
+    "url": "https://github.com/rileygramlich/obsidian-gate/issues"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

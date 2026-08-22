@@ -11,7 +11,7 @@
 <body>
 <nav>
   <div class="wrap">
-    <a class="brand" href="/"><span class="logo">◈</span> obsidian-agent</a>
+    <a class="brand" href="/"><span class="logo">◈</span> obsidian-gate</a>
     <div class="links">
       <a href="#features">Features</a>
       <a href="#tools">Tools</a>
@@ -42,9 +42,9 @@
     <div class="terminal">
       <div class="bar">
         <i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i>
-        <span class="t">claude code — obsidian-agent</span>
+        <span class="t">claude code — obsidian-gate</span>
       </div>
-<pre><span class="c">$</span> npx obsidian-agent-connector init
+<pre><span class="c">$</span> npx obsidian-gate init
 <span class="o">✓ Vault registered: Personal → ~/Obsidian/Personal
 ✓ Found 1,284 notes in 37 folders
 ✓ API key generated: sk-4f2a…9c1e</span>
@@ -89,7 +89,7 @@ three open questions under ## Blockers.</span>
   "mcpServers": {
     "obsidian": {
       "command": "npx",
-      "args": ["obsidian-agent-connector", "--mcp"]
+      "args": ["obsidian-gate", "--mcp"]
     }
   }
 }</pre>
@@ -152,7 +152,7 @@ three open questions under ## Blockers.</span>
       </div>
     </div>
     <p class="center small muted" style="margin-top:22px">
-      Already have a key? Activate it in <a href="/settings">Settings</a> or run <code>obsidian-agent-connector license set &lt;key&gt;</code>.
+      Already have a key? Activate it in <a href="/settings">Settings</a> or run <code>obsidian-gate license set &lt;key&gt;</code>.
     </p>
   </div>
 </section>
@@ -162,8 +162,8 @@ three open questions under ## Blockers.</span>
     <h2>Three seconds to install</h2>
     <div class="terminal" style="text-align:left; margin-top:20px">
       <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="t">bash</span></div>
-<pre><span class="c">$</span> npx obsidian-agent-connector init   <span class="c"># point it at your vault</span>
-<span class="c">$</span> npx obsidian-agent-connector        <span class="c"># dashboard on :3100</span></pre>
+<pre><span class="c">$</span> npx obsidian-gate init   <span class="c"># point it at your vault</span>
+<span class="c">$</span> npx obsidian-gate        <span class="c"># dashboard on :3100</span></pre>
     </div>
     <div class="cta-row" style="justify-content:center">
       <a class="btn" href="/install">Full install guide →</a>
@@ -174,11 +174,11 @@ three open questions under ## Blockers.</span>
 
 <footer>
   <div class="wrap">
-    <span>◈ obsidian-agent · runs locally, your notes stay yours</span>
+    <span>◈ obsidian-gate · runs locally, your notes stay yours</span>
     <span class="links">
-      <a href="https://github.com/obsidian-agent/obsidian-agent">GitHub</a>
+      <a href="https://github.com/obsidian-gate/obsidian-gate">GitHub</a>
       <a href="/install">Docs</a>
-      <a href="https://github.com/obsidian-agent/obsidian-agent/releases">Changelog</a>
+      <a href="https://github.com/obsidian-gate/obsidian-gate/releases">Changelog</a>
     </span>
   </div>
 </footer>
@@ -212,7 +212,7 @@ async function checkout(plan) {
     if (data.url) { window.location = data.url; return; }
     toast(data.error || "Checkout is not configured on this machine.", true);
   } catch (err) {
-    toast("Could not reach the local server. Is `npx obsidian-agent-connector` running?", true);
+    toast("Could not reach the local server. Is `npx obsidian-gate` running?", true);
   }
 }
 </script>

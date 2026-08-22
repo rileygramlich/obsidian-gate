@@ -323,11 +323,11 @@ export function createDashboardApp() {
 
   app.get("/api/mcp-config", auth, wrap((req, res) => {
     const cfg = loadConfig(true);
-    const key = cfg.agent_connections[0]?.key ?? "sk-run-obsidian-agent-init-first";
+    const key = cfg.agent_connections[0]?.key ?? "sk-run-obsidian-gate-init-first";
     res.json({
       stdio: {
         mcpServers: {
-          obsidian: { command: "npx", args: ["obsidian-agent", "--mcp"] },
+          obsidian: { command: "npx", args: ["obsidian-gate", "--mcp"] },
         },
       },
       http: {

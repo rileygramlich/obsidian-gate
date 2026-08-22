@@ -5,7 +5,7 @@
 One command:
 
 ```bash
-claude mcp add obsidian -- npx obsidian-agent-connector --mcp
+claude mcp add obsidian -- npx obsidian-gate --mcp
 ```
 
 Or add it to `.mcp.json` in your project (checked in, shared with your team):
@@ -15,7 +15,7 @@ Or add it to `.mcp.json` in your project (checked in, shared with your team):
   "mcpServers": {
     "obsidian": {
       "command": "npx",
-      "args": ["obsidian-agent-connector", "--mcp"]
+      "args": ["obsidian-gate", "--mcp"]
     }
   }
 }
@@ -28,7 +28,7 @@ Pin a specific vault when you have more than one:
   "mcpServers": {
     "obsidian": {
       "command": "npx",
-      "args": ["obsidian-agent-connector", "--mcp", "--vault", "Work"]
+      "args": ["obsidian-gate", "--mcp", "--vault", "Work"]
     }
   }
 }
@@ -50,7 +50,7 @@ Verify from inside Claude Code:
   "mcpServers": {
     "obsidian": {
       "command": "npx",
-      "args": ["obsidian-agent-connector", "--mcp"],
+      "args": ["obsidian-gate", "--mcp"],
       "env": { "OBSIDIAN_VAULT_PATH": "/home/you/Obsidian/Personal" }
     }
   }
@@ -59,7 +59,7 @@ Verify from inside Claude Code:
 
 ## Cursor / Codex / any MCP client — HTTP transport
 
-Start the server once (`npx obsidian-agent-connector`), then point clients at it. The HTTP
+Start the server once (`npx obsidian-gate`), then point clients at it. The HTTP
 endpoint always requires an API key, so several agents can share one server with
 different permissions.
 
@@ -75,12 +75,12 @@ different permissions.
 }
 ```
 
-Get a key with `obsidian-agent-connector keys new "Cursor"` or from the Settings page.
+Get a key with `obsidian-gate keys new "Cursor"` or from the Settings page.
 
 ## MCP Inspector
 
 ```bash
-npx @modelcontextprotocol/inspector npx obsidian-agent-connector --mcp
+npx @modelcontextprotocol/inspector npx obsidian-gate --mcp
 ```
 
 The inspector lists all nine tools plus your notes as `obsidian://{vault}/{path}` resources.

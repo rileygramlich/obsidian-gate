@@ -24,7 +24,7 @@ import { assertPermission } from "./auth.js";
 import { enforceQueryLimit, LimitError } from "./license.js";
 import { Vault, VaultError, normalizeDate } from "./vault.js";
 
-export const SERVER_NAME = "obsidian-agent-connector";
+export const SERVER_NAME = "obsidian-gate";
 export const SERVER_VERSION = "1.0.0";
 
 export const TOOL_DEFINITIONS = [

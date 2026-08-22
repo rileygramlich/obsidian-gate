@@ -1,7 +1,7 @@
 /**
  * API key generation and validation.
  *
- * Keys are local secrets stored in ~/.obsidian-agent/config.json (mode 0600).
+ * Keys are local secrets stored in ~/.obsidian-gate/config.json (mode 0600).
  * They gate access to the MCP-over-HTTP endpoint and the dashboard API, so a
  * stray process on the machine — or anything on the LAN — can't read your vault.
  */

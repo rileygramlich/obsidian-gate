@@ -170,7 +170,7 @@ export function enforceQueryLimit(cfg: Config): void {
   if (used >= limits.queries_per_month) {
     throw new LimitError(
       `Free tier limit reached: ${limits.queries_per_month} queries this month. ` +
-        `Upgrade at http://localhost:${cfg.settings.port}/#pricing or run \`obsidian-agent license set <key>\`.`,
+        `Upgrade at http://localhost:${cfg.settings.port}/#pricing or run \`obsidian-gate license set <key>\`.`,
     );
   }
 }

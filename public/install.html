@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Install · obsidian-agent</title>
+<title>Install · obsidian-gate</title>
 <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
 <nav>
   <div class="wrap">
-    <a class="brand" href="/"><span class="logo">◈</span> obsidian-agent</a>
+    <a class="brand" href="/"><span class="logo">◈</span> obsidian-gate</a>
     <div class="links">
       <a href="/install" class="active">Install</a>
       <a href="/dashboard">Dashboard</a>
@@ -26,7 +26,7 @@
   <h2 style="margin-top:36px">1 · Run the wizard</h2>
   <div class="terminal">
     <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="t">bash</span></div>
-<pre><span class="c">$</span> npx obsidian-agent-connector init
+<pre><span class="c">$</span> npx obsidian-gate init
 
 <span class="o">Path to your Obsidian vault:</span> <span class="p">~/Obsidian/Personal</span>
 <span class="o">Vault name [Personal]:</span>
@@ -36,9 +36,9 @@
 <span class="o">✓ Vault registered: Personal → /home/you/Obsidian/Personal
 ✓ Found 1,284 notes in 37 folders
 ✓ API key generated: sk-4f2a…9c1e
-  (stored in ~/.obsidian-agent/config.json)</span></pre>
+  (stored in ~/.obsidian-gate/config.json)</span></pre>
   </div>
-  <p class="small muted">The wizard writes <code>~/.obsidian-agent/config.json</code>. That file is the whole configuration — vaults, keys, permissions, settings. No database, no account.</p>
+  <p class="small muted">The wizard writes <code>~/.obsidian-gate/config.json</code>. That file is the whole configuration — vaults, keys, permissions, settings. No database, no account.</p>
 
   <h2 style="margin-top:36px">2 · Point your agent at it</h2>
   <p class="small muted">Recommended: stdio. Your MCP client launches the server itself, so there's nothing to keep running.</p>
@@ -48,7 +48,7 @@
   "mcpServers": {
     "obsidian": {
       "command": "npx",
-      "args": ["obsidian-agent", "--mcp"]
+      "args": ["obsidian-gate", "--mcp"]
     }
   }
 }</pre>
@@ -58,20 +58,20 @@
     <button class="btn secondary sm copy" onclick="copy('cfg-http')">Copy</button>
     <pre class="code" id="cfg-http">…</pre>
   </div>
-  <p class="small muted">Claude Code, one-liner: <code>claude mcp add obsidian -- npx obsidian-agent-connector --mcp</code></p>
+  <p class="small muted">Claude Code, one-liner: <code>claude mcp add obsidian -- npx obsidian-gate --mcp</code></p>
 
   <h2 style="margin-top:36px">3 · Test the connection</h2>
   <div class="terminal">
     <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="t">bash</span></div>
-<pre><span class="c">$</span> npx obsidian-agent-connector doctor
-<span class="o">✓ Config file present (~/.obsidian-agent/config.json)
+<pre><span class="c">$</span> npx obsidian-gate doctor
+<span class="o">✓ Config file present (~/.obsidian-gate/config.json)
 ✓ Vault readable: /home/you/Obsidian/Personal (1284 notes)
 ✓ Agent connections: 1
 ✓ Tool list_notes works
 ✓ Tool get_tags works
 ✓ Tool search_notes works</span>
 
-<span class="c">$</span> npx @modelcontextprotocol/inspector npx obsidian-agent-connector --mcp
+<span class="c">$</span> npx @modelcontextprotocol/inspector npx obsidian-gate --mcp
 <span class="c"># inspector opens and lists all nine tools</span></pre>
   </div>
   <div class="card" style="margin-top:18px">
@@ -92,7 +92,7 @@
       <button class="btn secondary" onclick="checkout('personal')">Buy Personal · $19/mo</button>
       <button class="btn secondary" onclick="checkout('team')">Buy Team · $49/mo</button>
     </div>
-    <p class="small muted" style="margin:12px 0 0">Or from the terminal: <code>obsidian-agent license set &lt;key&gt;</code></p>
+    <p class="small muted" style="margin:12px 0 0">Or from the terminal: <code>obsidian-gate license set &lt;key&gt;</code></p>
   </div>
 
   <h2 style="margin-top:36px">Or use the Obsidian plugin</h2>
@@ -103,7 +103,7 @@
   </p>
 </main>
 
-<footer><div class="wrap"><span>◈ obsidian-agent</span><span class="links"><a href="/dashboard">Dashboard</a><a href="https://github.com/obsidian-agent/obsidian-agent">GitHub</a></span></div></footer>
+<footer><div class="wrap"><span>◈ obsidian-gate</span><span class="links"><a href="/dashboard">Dashboard</a><a href="https://github.com/obsidian-gate/obsidian-gate">GitHub</a></span></div></footer>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -156,7 +156,7 @@ async function testConnection() {
     const vault = status.vaults[0];
     out.innerHTML = vault
       ? `✓ server on :${status.server.port}<br>✓ vault "${vault.name}" — ${vault.notes} notes<br>✓ ${status.connections} agent connection(s)<br>✓ plan: ${status.license.label}`
-      : "⚠ server is up, but no vault is configured. Run <code>npx obsidian-agent-connector init</code>.";
+      : "⚠ server is up, but no vault is configured. Run <code>npx obsidian-gate init</code>.";
   } catch (e) {
     out.textContent = "✗ " + e.message;
   }

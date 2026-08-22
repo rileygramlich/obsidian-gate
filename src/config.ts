@@ -1,7 +1,7 @@
 /**
  * Config management for Obsidian Agent Connector.
  *
- * Everything is local. The source of truth is ~/.obsidian-agent/config.json,
+ * Everything is local. The source of truth is ~/.obsidian-gate/config.json,
  * with env vars layered on top for one-off overrides. No database, no cloud.
  */
 import fs from "node:fs";
@@ -77,7 +77,7 @@ export const DEFAULT_SETTINGS: Settings = {
 
 export function configHome(): string {
   return (
-    process.env.OBSIDIAN_AGENT_HOME || path.join(os.homedir(), ".obsidian-agent")
+    process.env.OBSIDIAN_AGENT_HOME || path.join(os.homedir(), ".obsidian-gate")
   );
 }
 
@@ -250,7 +250,7 @@ export function configExists(): boolean {
 export function getVault(cfg: Config, name?: string | null): VaultConfig {
   if (!cfg.vaults.length) {
     throw new Error(
-      "No vault configured. Run `obsidian-agent init` to point the connector at your Obsidian vault.",
+      "No vault configured. Run `obsidian-gate init` to point the connector at your Obsidian vault.",
     );
   }
   if (!name) return cfg.vaults[0];
@@ -365,5 +365,5 @@ export function log(
   const order = { debug: 0, info: 1, warn: 2, error: 3 } as const;
   if (order[level] < order[cfg.settings.log_level]) return;
   // stderr keeps stdout clean for the stdio MCP transport.
-  console.error(`[obsidian-agent] ${level}:`, ...args);
+  console.error(`[obsidian-gate] ${level}:`, ...args);
 }

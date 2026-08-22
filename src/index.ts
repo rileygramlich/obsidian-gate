@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * CLI entry point — `npx obsidian-agent`.
+ * CLI entry point — `npx obsidian-gate`.
  *
- *   obsidian-agent            start the dashboard + MCP HTTP endpoint
- *   obsidian-agent --mcp      speak MCP over stdio (what agents launch)
- *   obsidian-agent init       interactive setup wizard
- *   obsidian-agent keys ...   manage agent API keys
- *   obsidian-agent doctor     verify the vault, key auth and every tool
+ *   obsidian-gate            start the dashboard + MCP HTTP endpoint
+ *   obsidian-gate --mcp      speak MCP over stdio (what agents launch)
+ *   obsidian-gate init       interactive setup wizard
+ *   obsidian-gate keys ...   manage agent API keys
+ *   obsidian-gate doctor     verify the vault, key auth and every tool
  */
 import "dotenv/config";
 import fs from "node:fs";
@@ -48,7 +48,7 @@ const bad = (msg: string) => say(`${c.red}✗${c.reset} ${msg}`);
 function banner(): void {
   say(`${c.purple}${c.bold}
   ┌─────────────────────────────────────────┐
-  │  Obsidian Agent Connector  v${SERVER_VERSION}        │
+  │  Obsidian Gate  v${SERVER_VERSION}                │
   │  Your vault, readable by any AI agent   │
   └─────────────────────────────────────────┘${c.reset}`);
 }
@@ -64,7 +64,7 @@ async function runStdioServer(vaultName?: string): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   // stdout belongs to the protocol; anything human-readable goes to stderr.
-  console.error(`[obsidian-agent] MCP stdio server ready (${TOOL_DEFINITIONS.length} tools)`);
+  console.error(`[obsidian-gate] MCP stdio server ready (${TOOL_DEFINITIONS.length} tools)`);
 }
 
 /* ------------------------------------------------------------------ */
@@ -131,7 +131,7 @@ async function runInit(): Promise<void> {
     say(`\n${c.bold}Add this to your MCP client config:${c.reset}`);
     say(
       `${c.green}${JSON.stringify(
-        { mcpServers: { obsidian: { command: "npx", args: ["obsidian-agent", "--mcp"] } } },
+        { mcpServers: { obsidian: { command: "npx", args: ["obsidian-gate", "--mcp"] } } },
         null,
         2,
       )}${c.reset}`,
@@ -153,7 +153,7 @@ async function runInit(): Promise<void> {
       )}${c.reset}`,
     );
 
-    say(`\nNext: ${c.bold}npx obsidian-agent${c.reset} → dashboard at http://localhost:${cfg.settings.port}`);
+    say(`\nNext: ${c.bold}npx obsidian-gate${c.reset} → dashboard at http://localhost:${cfg.settings.port}`);
   } finally {
     rl.close();
   }
@@ -178,7 +178,7 @@ async function runDoctor(): Promise<void> {
   check(fs.existsSync(configPath()), `Config file present (${configPath()})`);
   check(cfg.vaults.length > 0, `Vault configured (${cfg.vaults.length})`);
   if (!cfg.vaults.length) {
-    say(`\n${c.yellow}Run \`obsidian-agent init\` first.${c.reset}`);
+    say(`\n${c.yellow}Run \`obsidian-gate init\` first.${c.reset}`);
     process.exitCode = 1;
     return;
   }
@@ -224,7 +224,7 @@ async function runServe(portOpt?: string): Promise<void> {
   banner();
   const cfg = loadConfig(true);
   if (!cfg.vaults.length) {
-    say(`${c.yellow}No vault configured yet.${c.reset} Run ${c.bold}npx obsidian-agent init${c.reset} first.\n`);
+    say(`${c.yellow}No vault configured yet.${c.reset} Run ${c.bold}npx obsidian-gate init${c.reset} first.\n`);
   }
   const port = portOpt ? Number(portOpt) : cfg.settings.port;
   const { port: bound } = await startDashboard(port);
@@ -232,7 +232,7 @@ async function runServe(portOpt?: string): Promise<void> {
 
   ok(`Dashboard   http://localhost:${bound}/dashboard`);
   ok(`MCP (HTTP)  http://localhost:${bound}/mcp  ${c.dim}(Authorization: Bearer <key>)${c.reset}`);
-  ok(`MCP (stdio) npx obsidian-agent --mcp`);
+  ok(`MCP (stdio) npx obsidian-gate --mcp`);
   say(`${c.dim}Plan: ${license.label} · vault${cfg.vaults.length === 1 ? "" : "s"}: ${cfg.vaults.map((v) => v.name).join(", ") || "none"}${c.reset}`);
   say(`${c.dim}Press Ctrl+C to stop.${c.reset}`);
 }
@@ -243,7 +243,7 @@ async function runServe(portOpt?: string): Promise<void> {
 
 const program = new Command();
 program
-  .name("obsidian-agent")
+  .name("obsidian-gate")
   .description("MCP server that connects AI agents to your Obsidian vault")
   .version(SERVER_VERSION)
   .option("--mcp", "run as an MCP server over stdio")
@@ -279,7 +279,7 @@ keys
   .description("list agent connections")
   .action(() => {
     const cfg = loadConfig(true);
-    if (!cfg.agent_connections.length) return say("No agent connections yet. Run `obsidian-agent init`.");
+    if (!cfg.agent_connections.length) return say("No agent connections yet. Run `obsidian-gate init`.");
     for (const conn of cfg.agent_connections) {
       say(
         `${c.bold}${conn.name}${c.reset}  ${maskKey(conn.key)}  vault=${conn.vault}  ` +
@@ -404,7 +404,7 @@ program
 if (process.argv.includes("--mcp")) {
   const vaultIdx = process.argv.indexOf("--vault");
   runStdioServer(vaultIdx > -1 ? process.argv[vaultIdx + 1] : undefined).catch((err) => {
-    console.error("[obsidian-agent] fatal:", err);
+    console.error("[obsidian-gate] fatal:", err);
     process.exit(1);
   });
 } else {
