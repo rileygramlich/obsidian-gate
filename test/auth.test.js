@@ -1,8 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { useTempHome } from "./helpers.js";
+import { useTempHome, rm } from "./helpers.js";
 
-useTempHome();
+const home = useTempHome();
+test.after(() => rm(home));
+
 const {
   ALL_PERMISSIONS, generateKey, createConnection, findConnection, revokeConnection,
   rotateConnection, setPermissions, hasPermission, assertPermission, maskKey, extractKey,

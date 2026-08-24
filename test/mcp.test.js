@@ -2,10 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { useTempHome, makeVault } from "./helpers.js";
+import { useTempHome, makeVault, rm, PROJECT_NOTES } from "./helpers.js";
 
 const home = useTempHome();
-const vaultCfg = makeVault();
+const vaultCfg = makeVault(PROJECT_NOTES);
 
 // Point the server at our throwaway vault before anything reads config.
 const { defaultConfig } = await import("../dist/config.js");
@@ -14,6 +14,11 @@ seed.vaults = [vaultCfg];
 fs.writeFileSync(path.join(home, "config.json"), JSON.stringify(seed, null, 2));
 
 const { callTool, TOOL_DEFINITIONS, SERVER_NAME, SERVER_VERSION } = await import("../dist/mcp-server.js");
+
+test.after(() => {
+  rm(home);
+  rm(vaultCfg.path);
+});
 
 const parse = (res) => JSON.parse(res.content[0].text);
 const call = (name, args = {}, ctx = {}) => callTool(name, args, ctx);
@@ -99,7 +104,7 @@ test("update_note replaces the body", async () => {
 
 test("get_daily_note creates today's note", async () => {
   const out = parse(await call("get_daily_note", {}));
-  assert.match(out.path, /^Daily\/\d{4}-\d{2}-\d{2}\.md$/);
+  assert.match(out.path, /^01-Daily\/\d{4}-\d{2}-\d{2}\.md$/);
 });
 
 /* ------------------------- error surfaces --------------------------- */
