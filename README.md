@@ -189,6 +189,6 @@ npm run dev       # hot-reload with tsx
 
 ---
 
-Built by [Riley G.](https://github.com/rileygramlich) — inspired by the Marc Lou playbook: ship fast, free tier, zero ad spend, build in public.
+Built by [Riley G.](https://github.com/rileygramlich) — ship fast, free tier, zero ad spend, build in public.
 
 **MIT** — build on it, ship it, sell it.
