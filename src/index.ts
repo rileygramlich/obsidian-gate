@@ -46,11 +46,19 @@ const ok = (msg: string) => say(`${c.green}✓${c.reset} ${msg}`);
 const bad = (msg: string) => say(`${c.red}✗${c.reset} ${msg}`);
 
 function banner(): void {
-  say(`${c.purple}${c.bold}
-  ┌─────────────────────────────────────────┐
-  │  Obsidian Gate  v${SERVER_VERSION}                │
-  │  Your vault, readable by any AI agent   │
-  └─────────────────────────────────────────┘${c.reset}`);
+  // Pad to the border width so the box stays square whatever the version is.
+  const W = 41;
+  const line = (text: string) => `  \u2502${text.padEnd(W)}\u2502`;
+  const rule = (l: string, r: string) => `  ${l}${"\u2500".repeat(W)}${r}`;
+  say(
+    [
+      `${c.purple}${c.bold}`,
+      rule("\u250c", "\u2510"),
+      line(`  Obsidian Gate  v${SERVER_VERSION}`),
+      line("  Your vault, readable by any AI agent"),
+      rule("\u2514", "\u2518") + c.reset,
+    ].join("\n"),
+  );
 }
 
 /* ------------------------------------------------------------------ */
