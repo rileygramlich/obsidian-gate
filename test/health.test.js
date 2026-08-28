@@ -124,3 +124,23 @@ test("POST /api/checkout reports the missing Stripe config instead of hanging", 
   assert.equal(res.status, 400);
   assert.match((await res.json()).error, /Stripe is not configured/);
 });
+
+test("POST /api/checkout/claim refuses a request with no session ID", async () => {
+  const res = await fetch(`${server.base}/api/checkout/claim`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({}),
+  });
+  assert.equal(res.status, 400);
+  assert.match((await res.json()).error, /session ID is required/);
+});
+
+test("POST /api/checkout/claim does not mint keys without vendor credentials", async () => {
+  const res = await fetch(`${server.base}/api/checkout/claim`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ session_id: "cs_test_abc123" }),
+  });
+  assert.equal(res.status, 400);
+  assert.match((await res.json()).error, /Stripe is not configured/);
+});

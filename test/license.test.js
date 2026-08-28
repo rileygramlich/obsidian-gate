@@ -17,6 +17,8 @@ const {
   enforceConnectionLimit,
   LimitError,
   createCheckoutSession,
+  claimLicenseFromSession,
+  generateLicenseKey,
 } = await import("../dist/license.js");
 
 test.after(() => rm(home));
@@ -183,6 +185,49 @@ test("checkout fails loudly when the plan's price ID is missing", async () => {
       () => createCheckoutSession("team", "http://localhost:3100"),
       /No Stripe price configured for the team plan/,
     );
+  } finally {
+    delete process.env.STRIPE_SECRET_KEY;
+  }
+});
+
+/* ------------------------- key issuance -------------------------- */
+
+test("issued keys carry their tier and mode", () => {
+  const personal = generateLicenseKey("personal", true);
+  const team = generateLicenseKey("team", false);
+  assert.match(personal, /^oa_live_personal_[0-9a-f]{32}$/);
+  assert.match(team, /^oa_test_team_[0-9a-f]{32}$/);
+  assert.notEqual(generateLicenseKey("personal", true), personal, "keys are random");
+});
+
+test("an issued key validates offline at the tier it was minted for", async () => {
+  // The shape check is what a paying user falls back on with no network, so a
+  // key we mint must survive it — otherwise checkout sells a dead key.
+  for (const tier of ["personal", "team"]) {
+    const cfg = defaultConfig();
+    cfg.license.key = generateLicenseKey(tier, true);
+    const state = await validateLicense(cfg, { force: true });
+    assert.equal(state.status, "active");
+    assert.equal(state.tier, tier);
+  }
+});
+
+test("claiming a license fails loudly when Stripe is not configured", async () => {
+  await assert.rejects(
+    () => claimLicenseFromSession("cs_test_abc123"),
+    /Stripe is not configured/,
+  );
+});
+
+test("claiming rejects anything that is not a checkout session ID", async () => {
+  process.env.STRIPE_SECRET_KEY = "sk_test_placeholder_not_a_real_key";
+  try {
+    for (const bad of ["", "sub_123", "cs_test_abc; DROP", "../../etc/passwd"]) {
+      await assert.rejects(
+        () => claimLicenseFromSession(bad),
+        /does not look like a Stripe Checkout session ID/,
+      );
+    }
   } finally {
     delete process.env.STRIPE_SECRET_KEY;
   }

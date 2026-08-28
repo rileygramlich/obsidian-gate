@@ -185,7 +185,33 @@ cd obsidian-gate
 npm install
 npm run build     # compile TypeScript → dist/
 npm run dev       # hot-reload with tsx
+npm test          # node:test suite
 ```
+
+### Running checkout yourself (vendor setup)
+
+Only the person selling licenses needs this — end users never touch Stripe.
+
+```bash
+# 1. Create the two subscription products. Idempotent, safe to re-run.
+STRIPE_SECRET_KEY=sk_test_... node scripts/create-stripe-products.mjs
+
+# 2. Paste the printed price IDs plus your secret key into .env
+#    STRIPE_SECRET_KEY / STRIPE_PRICE_PERSONAL / STRIPE_PRICE_TEAM
+
+# 3. Start the dashboard and buy from the pricing section
+npm start
+```
+
+Checkout returns to `/install.html?checkout=success&session_id=...`, which trades
+the session for a license key: the key is minted, written to the subscription's
+`license_key` metadata, and — when you are on the local dashboard — activated on
+the spot. Re-running the same claim returns the same key rather than minting a
+second one. `validateLicense` later re-checks that key against Stripe once a day
+and falls back to the key's own shape when the network is down.
+
+Do the whole loop against a `sk_test_` key first, then re-run step 1 with the
+live key to mirror the products into the live account.
 
 ---
 

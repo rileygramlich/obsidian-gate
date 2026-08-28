@@ -36,6 +36,7 @@ import {
   type AuthedRequest,
 } from "./auth.js";
 import {
+  claimLicenseFromSession,
   createCheckoutSession,
   createPortalSession,
   enforceConnectionLimit,
@@ -92,6 +93,12 @@ function watchVaults(cfg: Config): void {
     pending = setTimeout(() => refreshIndex(loadConfig(true)), 1500);
   };
   watcher.on("add", debounced).on("unlink", debounced).on("change", debounced);
+}
+
+/** True when the request came from this machine (::1 / 127.0.0.0/8). */
+function isLoopback(req: Request): boolean {
+  const ip = (req.ip || req.socket.remoteAddress || "").replace(/^::ffff:/, "");
+  return ip === "::1" || ip.startsWith("127.");
 }
 
 function wrap(handler: (req: AuthedRequest, res: Response) => Promise<void> | void) {
@@ -313,6 +320,35 @@ export function createDashboardApp() {
       process.env.PUBLIC_URL || `${req.protocol}://${req.get("host") ?? "localhost"}`;
     const session = await createCheckoutSession(plan, publicUrl);
     res.json(session);
+  }));
+
+  // Stripe redirects the buyer here with ?session_id=... — this is where the
+  // license key they just paid for actually gets minted. Left unauthenticated
+  // on purpose: the buyer may be returning to a vendor-hosted page rather than
+  // their own dashboard, and the unguessable session ID is the credential.
+  app.post("/api/checkout/claim", wrap(async (req, res) => {
+    const sessionId = String(req.body?.session_id || "").trim();
+    if (!sessionId) throw new Error("A checkout session ID is required.");
+    const claimed = await claimLicenseFromSession(sessionId);
+
+    // Only a local browser gets the key written straight into the config; a
+    // remote buyer copies it into their own machine's dashboard.
+    let activated = false;
+    if (isLoopback(req)) {
+      const cfg = loadConfig(true);
+      cfg.license.key = claimed.key;
+      cfg.license.checked_at = null;
+      saveConfig(cfg);
+      await validateLicense(cfg, { force: true });
+      activated = true;
+      logActivity({
+        agent: "dashboard",
+        tool: "claim_license",
+        summary: `activated ${claimed.tier} license from checkout`,
+        ok: true,
+      });
+    }
+    res.json({ ...claimed, activated });
   }));
 
   app.post("/api/portal", auth, wrap(async (req, res) => {

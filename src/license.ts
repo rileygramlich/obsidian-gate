@@ -5,6 +5,7 @@
  * check, not a gate on every call: validate the key, cache the tier in the
  * local config, and fall back to the free tier if the network is down.
  */
+import crypto from "node:crypto";
 import Stripe from "stripe";
 import {
   currentMonth,
@@ -118,7 +119,9 @@ export async function validateLicense(
 
   try {
     const subs = await stripe.subscriptions.search({
-      query: `status:'active' AND metadata['license_key']:'${key.replace(/'/g, "")}'`,
+      query:
+        `metadata['license_key']:'${key.replace(/'/g, "")}' AND ` +
+        `(status:'active' OR status:'trialing')`,
       limit: 1,
     });
     const sub = subs.data[0];
@@ -264,4 +267,95 @@ export async function createPortalSession(
     return_url: `${publicUrl}/settings.html`,
   });
   return { url: session.url };
+}
+
+/* ------------------------------------------------------------------ */
+/* License key issuance — the other half of checkout.                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Keys are minted here and stored on the Stripe subscription, which is the
+ * only source of truth we have: `validateLicense` finds a subscription by
+ * searching `metadata['license_key']`, so a key that was never written back to
+ * Stripe would validate today (by shape) and die tomorrow (by search).
+ *
+ * The `test`/`live` half mirrors the Stripe key that minted it, so a sandbox
+ * key can never be mistaken for a paid one when reading logs.
+ */
+export function generateLicenseKey(tier: "personal" | "team", live: boolean): string {
+  return `oa_${live ? "live" : "test"}_${tier}_${crypto.randomBytes(16).toString("hex")}`;
+}
+
+export interface ClaimedLicense {
+  key: string;
+  tier: "personal" | "team";
+  status: "active" | "trialing";
+  customer_id: string | null;
+  subscription_id: string;
+}
+
+/**
+ * Exchange a completed Checkout Session for the license key it bought.
+ *
+ * Idempotent: the key lives in the subscription's metadata, so refreshing the
+ * success page — or re-claiming from another machine — returns the same key
+ * instead of minting a second one.
+ */
+export async function claimLicenseFromSession(sessionId: string): Promise<ClaimedLicense> {
+  const stripe = stripeClient();
+  if (!stripe) {
+    throw new Error(
+      "Stripe is not configured on this machine. Set STRIPE_SECRET_KEY to issue license keys.",
+    );
+  }
+  if (!/^cs_[A-Za-z0-9_]+$/.test(sessionId.trim())) {
+    throw new Error("That does not look like a Stripe Checkout session ID.");
+  }
+
+  const session = await stripe.checkout.sessions.retrieve(sessionId.trim(), {
+    expand: ["subscription"],
+  });
+
+  const sub = session.subscription;
+  if (!sub || typeof sub === "string") {
+    // Checkout completed but the subscription has not landed yet, or the
+    // session was abandoned. Either way there is nothing to hand out.
+    throw new Error(
+      "No subscription on that checkout session yet. Give Stripe a moment and reload, or contact support with the session ID.",
+    );
+  }
+  if (sub.status !== "active" && sub.status !== "trialing") {
+    throw new Error(`That subscription is ${sub.status}, not active.`);
+  }
+
+  const existing = sub.metadata?.license_key;
+  if (existing) {
+    return {
+      key: existing,
+      tier: (sub.metadata?.tier as "personal" | "team") || "personal",
+      status: sub.status === "trialing" ? "trialing" : "active",
+      customer_id: typeof sub.customer === "string" ? sub.customer : sub.customer?.id ?? null,
+      subscription_id: sub.id,
+    };
+  }
+
+  // `tier` is set by createCheckoutSession; fall back to the price we sold.
+  const tier: "personal" | "team" =
+    sub.metadata?.tier === "team" ||
+    sub.items.data[0]?.price?.id === process.env.STRIPE_PRICE_TEAM
+      ? "team"
+      : "personal";
+  const key = generateLicenseKey(tier, sub.livemode);
+
+  await stripe.subscriptions.update(sub.id, {
+    metadata: { ...(sub.metadata ?? {}), tier, license_key: key },
+  });
+
+  return {
+    key,
+    tier,
+    status: sub.status === "trialing" ? "trialing" : "active",
+    customer_id: typeof sub.customer === "string" ? sub.customer : sub.customer?.id ?? null,
+    subscription_id: sub.id,
+  };
 }

@@ -81,7 +81,7 @@
     <div id="test-out" class="small mono" style="margin-top:12px; color:var(--muted)">Not run yet.</div>
   </div>
 
-  <h2 style="margin-top:36px">4 · Activate your license</h2>
+  <h2 id="license" style="margin-top:36px">4 · Activate your license</h2>
   <p class="small muted">The free tier gives you 50 queries a month, one vault, one agent — enough to try it. Paid keys unlock the rest.</p>
   <div class="card">
     <label class="field"><span>License key</span>
@@ -143,10 +143,36 @@ async function api(path, opts) {
     document.getElementById("cfg-http").textContent =
       '{ "mcpServers": { "obsidian": { "type": "http", "url": "http://localhost:3100/mcp", "headers": { "Authorization": "Bearer <your-key>" } } } }';
   }
-  if (new URLSearchParams(location.search).get("checkout") === "success") {
-    toast("Payment complete — check your email for the license key, then activate it below.");
-  }
+  const params = new URLSearchParams(location.search);
+  if (params.get("checkout") === "success") await claimLicense(params.get("session_id"));
 })();
+
+/** Trade the Checkout session ID for the license key it bought. */
+async function claimLicense(sessionId) {
+  const field = document.getElementById("license-key");
+  if (!sessionId) {
+    toast("Payment complete — paste your license key below to activate it.");
+    return;
+  }
+  toast("Payment complete — fetching your license key…");
+  try {
+    const res = await api("/api/checkout/claim", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ session_id: sessionId }),
+    });
+    field.value = res.key;
+    toast(
+      res.activated
+        ? `Activated: ${res.tier} plan${res.status === "trialing" ? " (trial)" : ""}. Your key is below — save it.`
+        : "Here is your license key — copy it into your own dashboard to activate.",
+    );
+    // Keeping the session ID in the URL re-runs this on every refresh.
+    history.replaceState({}, "", location.pathname + "#license");
+  } catch (e) {
+    toast("Payment went through, but the key could not be issued: " + e.message, true);
+  }
+}
 
 async function testConnection() {
   const out = document.getElementById("test-out");
