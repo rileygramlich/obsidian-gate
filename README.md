@@ -213,6 +213,12 @@ and falls back to the key's own shape when the network is down.
 Do the whole loop against a `sk_test_` key first, then re-run step 1 with the
 live key to mirror the products into the live account.
 
+Both products carry a Stripe tax code (downloadable software — Gate installs
+from npm and runs on your own machine, so it is not SaaS). This is required, not
+cosmetic: accounts with Managed Payments enabled reject checkout outright for a
+product with no tax code. Check the codes against your own tax situation before
+you sell in live mode.
+
 ---
 
 Built by [Riley G.](https://github.com/rileygramlich) — ship fast, free tier, zero ad spend, build in public.

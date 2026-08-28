@@ -13,9 +13,25 @@
  */
 import Stripe from "stripe";
 
+// Gate installs from npm and runs on the buyer's own machine, so it is
+// downloadable software rather than SaaS. A tax code is not optional: accounts
+// with Managed Payments enabled (the default) reject checkout for any product
+// that lacks one, so leaving it off ships a store that cannot take money.
 const PLANS = [
-  { plan: "personal", name: "Obsidian Gate — Personal", amount: 1900, env: "STRIPE_PRICE_PERSONAL" },
-  { plan: "team", name: "Obsidian Gate — Team", amount: 4900, env: "STRIPE_PRICE_TEAM" },
+  {
+    plan: "personal",
+    name: "Obsidian Gate — Personal",
+    amount: 1900,
+    env: "STRIPE_PRICE_PERSONAL",
+    taxCode: "txcd_10202001", // Downloadable software — non-recreational, personal use
+  },
+  {
+    plan: "team",
+    name: "Obsidian Gate — Team",
+    amount: 4900,
+    env: "STRIPE_PRICE_TEAM",
+    taxCode: "txcd_10202003", // Downloadable software — business use
+  },
 ];
 
 const TRIAL_DAYS = Number(process.env.STRIPE_TRIAL_DAYS || 14);
@@ -31,18 +47,25 @@ const live = key.startsWith("sk_live_");
 console.error(`Using ${live ? "LIVE" : "test"} Stripe account.\n`);
 
 /** Find an existing product for this plan, or create it. */
-async function findOrCreateProduct({ plan, name }) {
+async function findOrCreateProduct({ plan, name, taxCode }) {
   const found = await stripe.products.search({
     query: `active:'true' AND metadata['og_plan']:'${plan}'`,
     limit: 1,
   });
   if (found.data[0]) {
     console.error(`· product exists  ${name} → ${found.data[0].id}`);
+    // Backfill: products created before tax codes were required would other-
+    // wise keep failing checkout with no obvious reason.
+    if (found.data[0].tax_code !== taxCode) {
+      await stripe.products.update(found.data[0].id, { tax_code: taxCode });
+      console.error(`  ↳ set tax code  ${taxCode}`);
+    }
     return found.data[0];
   }
   const product = await stripe.products.create({
     name,
     description: `Obsidian Gate ${plan} plan — connect your AI agents to your Obsidian vault.`,
+    tax_code: taxCode,
     metadata: { og_plan: plan },
   });
   console.error(`+ product created ${name} → ${product.id}`);
