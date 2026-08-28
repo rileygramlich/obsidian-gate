@@ -1,6 +1,6 @@
 # Obsidian Gate — Ship Checklist
 
-**Project root:** ~/workspace/dev/obsidian-gate/
+**Project root:** ~/dev/obsidian-gate/
 
 ## What's Already Built
 - Full MCP server with 9 tools — list_notes, read_note, search_notes, create_note, update_note, get_backlinks, get_tags, get_daily_note, create_link
@@ -13,40 +13,33 @@
 
 ## What Needs Doing
 
-### 1. Stripe — Create products + prices
-The landing page and license module reference Personal ($19/mo) and Team ($49/mo). Need real Stripe product/price IDs created so checkout works. Use the Stripe CLI or API to create:
+### 1. Stripe — Create products + prices — DONE
+Created in the Gramlich Software Services **sandbox** (test mode) by
+`scripts/create-stripe-products.mjs`: Personal $19/mo and Team $49/mo, both
+recurring monthly with a 14-day trial on the price. Re-run the same script with
+a `sk_live_` key to mirror them into the live account.
 
-- Product: "Obsidian Gate — Personal" — $19/month recurring
-- Product: "Obsidian Gate — Team" — $49/month recurring
-- Both with 14-day trial
+### 2. Wire the Stripe price IDs into license.ts — DONE
+Price IDs are in `.env` (gitignored); `POST /api/checkout` builds a real
+Checkout Session from them. The missing half is also built: `POST
+/api/checkout/claim` trades the returned session for a license key, stores it in
+the subscription's `license_key` metadata (idempotent), and activates it locally.
 
-### 2. Wire the Stripe price IDs into license.ts
-The license module needs the actual price IDs. Read `.env.example` to see the env vars. Make sure `POST /api/checkout` creates real Stripe Checkout Sessions.
+**Still needs a human:** paste a sandbox `sk_test_` secret key into `.env` —
+that is the one credential that cannot be generated from here.
 
-### 3. Write basic tests
-Create `test/` directory with at minimum:
-- Health check test
-- Config loading test
-- License tier enforcement test
-- Vault path resolution test
+### 3. Write basic tests — DONE
+`test/` covers health, config, auth, license tiers, vault paths, MCP tools, and
+key issuance. 112 tests, all passing.
 
-### 4. Publish to npm
-- Bump version if needed
-- `npm publish` — needs auth (user has npm account)
-- Tag v1.0.0 release on GitHub
+### 4. Publish — GitHub done, npm pending
+Repo is public at github.com/rileygramlich/obsidian-gate; `v1.0.0` is tagged but
+has no GitHub Release yet. npm publish still needs `npm login`.
 
 ### 5. Final verification
-- Server starts: `npx obsidian-gate` → dashboard on :3100
-- MCP mode: `npx obsidian-gate --mcp` → tools/list returns 9 tools
-- Doctor: `npx obsidian-gate doctor` → all checks pass
-- Checkout: landing page POST /api/checkout creates a real Stripe session URL
-
-## Build Order
-1. Create Stripe products with CLI
-2. Wire price IDs into license.ts
-3. Write tests in test/
-4. npm publish
-5. Verify everything
+- [x] TypeScript compiles clean
+- [x] `npm test` — 112/112
+- [ ] End-to-end checkout with a real sandbox key (blocked on the key above)
 
 ## What NOT to Do
 - ❌ Don't touch the MCP tools (they work)
