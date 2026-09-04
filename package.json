@@ -1,64 +1,29 @@
 {
-  "name": "obsidian-gate",
+  "name": "vault-gate",
   "version": "1.0.0",
-  "description": "MCP server that lets any AI agent read, search, write, and connect notes in your Obsidian vault.",
+  "description": "Obsidian plugin: a local MCP server that opens your vault to AI assistants.",
+  "private": true,
   "type": "module",
-  "main": "dist/index.js",
-  "bin": {
-    "obsidian-gate": "dist/index.js"
-  },
-  "files": [
-    "dist",
-    "public",
-    "examples",
-    "README.md"
-  ],
-  "engines": {
-    "node": ">=18"
-  },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsx src/index.ts",
-    "start": "node dist/index.js",
-    "mcp": "node dist/index.js --mcp",
-    "prepublishOnly": "npm run build && npm test",
-    "test": "node --test test/*.test.js"
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc --noEmit && node esbuild.config.mjs production",
+    "test": "node scripts/build-tests.mjs && node --test test/*.test.mjs",
+    "version": "node scripts/bump-version.mjs && git add manifest.json versions.json"
   },
   "keywords": [
-    "obsidian",
+    "obsidian-plugin",
     "mcp",
     "model-context-protocol",
     "ai",
-    "agent",
-    "notes",
-    "claude",
-    "knowledge-base",
-    "markdown",
-    "vault",
-    "note-taking"
+    "claude"
   ],
   "author": "Riley G.",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/rileygramlich/obsidian-gate.git"
-  },
-  "homepage": "https://github.com/rileygramlich/obsidian-gate#readme",
-  "bugs": {
-    "url": "https://github.com/rileygramlich/obsidian-gate/issues"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
-    "chokidar": "^5.0.0",
-    "commander": "^15.0.0",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "stripe": "^22.5.0"
-  },
   "devDependencies": {
-    "@types/express": "^5.0.6",
     "@types/node": "^26.2.0",
-    "tsx": "^4.23.12",
-    "typescript": "^7.0.2"
+    "builtin-modules": "^5.0.0",
+    "esbuild": "^0.25.0",
+    "obsidian": "^1.13.1",
+    "typescript": "^5.9.3"
   }
 }

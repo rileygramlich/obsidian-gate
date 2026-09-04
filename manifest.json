@@ -1,0 +1,10 @@
+{
+  "id": "vault-gate",
+  "name": "Vault Gate",
+  "version": "1.0.0",
+  "minAppVersion": "1.5.0",
+  "description": "Open your vault to AI assistants. Runs a local MCP server so Claude, Cursor, and other agents can read, search, and write your notes.",
+  "author": "Riley G.",
+  "authorUrl": "https://github.com/rileygramlich/obsidian-gate",
+  "isDesktopOnly": true
+}

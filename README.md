@@ -1,226 +1,155 @@
-# Obsidian Gate
+# Vault Gate
 
-**An MCP server that opens your Obsidian vault to any AI agent.**
+**Let AI assistants read, search, and write your Obsidian notes — without leaving your computer.**
 
-```bash
-npx obsidian-gate init     # point at your vault
-npx obsidian-gate          # dashboard on :3100
-```
-
-[![npm](https://img.shields.io/npm/v/obsidian-gate)](https://www.npmjs.com/package/obsidian-gate) [![License: MIT](https://img.shields.io/badge/License-MIT-purple)](LICENSE)
+Vault Gate runs a small [MCP](https://modelcontextprotocol.io) server inside Obsidian. Turn it on, click **Connect** next to Claude or Cursor, and your assistant can work with your vault. No terminal, no Node install, no vault path to configure.
 
 ---
 
-Your Obsidian vault is your second brain. Your AI agents should be able to use it.
+## Setup
 
-Claude Code, Codex, Cursor — one line of config and your vault becomes an agent-accessible workspace. Every note, every link, every tag. All local, all yours, no cloud.
+1. Install **Vault Gate** from Obsidian's community plugins and enable it.
+2. The setup guide opens. Choose what assistants may do — reading and searching are on, writing is off.
+3. Click **Connect** next to the assistant you use. Restart that app.
+
+That's it. Ask it something:
+
+| Ask | What happens |
+|-----|--------------|
+| "What did I write about last week?" | Reads your daily notes |
+| "Search my vault for Kubernetes notes" | Full-text search across every note |
+| "Summarise my meeting notes from March" | Finds them, reads them, summarises |
+| "Save this to my vault as a note" | Creates a note (needs write access) |
+
+Connecting writes the settings into the assistant's own config file and leaves a `.gate-backup` copy beside it. You can undo it any time with **Disconnect**.
+
+### Assistants Gate can set up for you
+
+Claude Desktop · Claude Code · Cursor · VS Code (Copilot) · Windsurf
+
+Anything else that speaks MCP works too — hit **Copy configuration** and paste it into that client's config.
 
 ---
 
-## Try It
+## What your assistant can do
 
-```bash
-# One command to set up
-npx obsidian-gate init
+Nine tools, gated by the three permissions you set in settings.
 
-# Start the dashboard
-npx obsidian-gate
-# → http://localhost:3100/dashboard
-```
+| Tool | Needs | What it does |
+|------|-------|--------------|
+| `list_notes` | Read | List notes and folders |
+| `read_note` | Read | A note's content and frontmatter |
+| `get_backlinks` | Read | Every note linking to this one |
+| `get_tags` | Read | All tags, with counts |
+| `get_daily_note` | Read | Today's note, created if missing |
+| `search_notes` | Search | Ranked full-text search with snippets |
+| `create_note` | Write | A new note, with your frontmatter template |
+| `update_note` | Write | Overwrite or append |
+| `create_link` | Write | Add a `[[wikilink]]` under `## Related` |
 
-That's it. Your agents can now read, search, and write to your vault.
+Notes are also readable as MCP resources at `obsidian://{vault}/{path}`.
 
 ---
 
-## Quick Start
+## Privacy and safety
 
-### 1. Point at your vault
+- **Nothing leaves your machine.** The server binds to `127.0.0.1` and there is no cloud component. Your assistant sends your notes wherever it normally sends your conversation — Gate itself uploads nothing and phones nowhere.
+- **Only while Obsidian is open.** Close Obsidian and the door closes.
+- **Every request needs the token** Gate generates for you. Regenerate it any time.
+- **Requests from web pages are refused.** A page you have open in a browser can otherwise reach `localhost`; Gate checks the `Origin` header and turns those away.
+- **Write access is off by default.** Turn it on when you want an assistant editing notes, not before.
+- **The `.obsidian` config folder is off limits**, and paths that try to climb out of the vault are rejected.
 
-```bash
-npx obsidian-gate init
-```
+---
 
-You'll be asked for your vault path. Paste it in, get an API key back.
+## Settings
 
-### 2. Connect your agent
+| Setting | Default | Notes |
+|---------|---------|-------|
+| Start automatically | On | Runs whenever Obsidian is open |
+| Port | 22360 | Change if something else holds it |
+| Name in assistant configs | `obsidian` | The key agents see the server under |
+| Access token | generated | Copy or regenerate |
+| Daily notes folder | vault root | Where `get_daily_note` looks |
+| Search results | 50 | Cap per search |
 
-**Claude Code** — drop this into your MCP config:
+Commands: **Start or stop the MCP server**, **Copy MCP configuration to clipboard**, **Open setup guide**.
 
-```json
-{
-  "mcpServers": {
-    "obsidian": {
-      "command": "npx",
-      "args": ["obsidian-gate", "--mcp"]
-    }
-  }
-}
-```
+---
 
-**Any MCP client** over HTTP:
+## Manual configuration
+
+For a client Gate doesn't know about:
 
 ```json
 {
   "mcpServers": {
     "obsidian": {
       "type": "http",
-      "url": "http://localhost:3100/mcp",
-      "headers": { "Authorization": "Bearer sk-your-key" }
+      "url": "http://127.0.0.1:22360/mcp",
+      "headers": { "Authorization": "Bearer YOUR_TOKEN" }
     }
   }
 }
 ```
 
-### 3. Ask your agent
-
-Try these:
-
-| Prompt | What happens |
-|--------|-------------|
-| "What did I work on yesterday?" | Agent reads your daily note |
-| "Search my vault for Kubernetes notes" | Full-text search across every note |
-| "Save this debugging session to my vault" | Creates a new note with frontmatter |
-| "Link my meeting notes to the project notes" | Adds a `[[wikilink]]` |
+Copy the filled-in version from **Settings → Vault Gate → Copy configuration**. VS Code puts this under `servers` rather than `mcpServers`.
 
 ---
 
-## Tools — 9 Operations
+## Troubleshooting
 
-| Tool | What it does |
-|------|-------------|
-| `list_notes(path?)` | List notes and folders in a vault folder |
-| `read_note(path)` | Full note content + parsed frontmatter |
-| `search_notes(query, limit?)` | Full-text search with ranked results and snippets |
-| `create_note(path, content, frontmatter?)` | New note with vault template frontmatter |
-| `update_note(path, content, mode?)` | Overwrite or append to a note |
-| `get_backlinks(path)` | Every note linking here via `[[wikilink]]` |
-| `get_tags()` | All tags — frontmatter and inline — with counts |
-| `get_daily_note(date?)` | Get or create the daily note (today, yesterday, -1, ISO) |
-| `create_link(from, to, label?)` | Add a `[[wikilink]]` under `## Related` |
+**The assistant doesn't see the vault.** Restart the assistant — most read their MCP config only at startup. Check the status bar says `Gate :22360`.
 
-Notes are also exposed as MCP resources: `obsidian://{vault}/{path}`.
+**"Port already in use."** Something else has 22360. Change the port in settings, then **Connect** again so the new URL is written out.
 
----
+**Connected, but every call fails.** The token was regenerated after you connected. Click **Reconnect**.
 
-## CLI
-
-| Command | What it does |
-|---------|-------------|
-| `init` | Interactive setup wizard |
-| `serve` (default) | Dashboard + MCP HTTP on :3100 |
-| `--mcp` | Run as MCP server over stdio |
-| `doctor` | Verify vault access and all 9 tools |
-| `keys list` | Show agent connections |
-| `keys new <name>` | Create a new API key |
-| `keys rotate <id>` | Rotate a key |
-| `keys revoke <id>` | Revoke a key |
-| `vault list` | Configured vaults |
-| `vault add <name> <path>` | Add a vault |
-| `vault remove <name>` | Remove a vault |
-| `license status` | Your plan and usage |
-| `license set <key>` | Activate a license key |
-| `activity` | Agent activity log |
-
----
-
-## Pricing
-
-| Tier | Price | What you get |
-|------|-------|-------------|
-| **Free** | $0 | 50 queries/month, 1 vault, 1 agent |
-| **Personal** | $19/mo | Unlimited queries, 3 vaults, unlimited agents |
-| **Team** | $49/mo | Everything in Personal + shared config, priority support |
-
-14-day free trial on paid plans. No risk. Cancel anytime.
-
----
-
-## Architecture
-
-```
-┌────────────┐     ┌──────────────────────┐     ┌──────────────┐
-│ AI Agent   │────▶│   obsidian-gate      │────▶│  Obsidian    │
-│ (Claude,   │◀────│   (MCP Server)       │◀────│  Vault       │
-│  Codex,    │     │                      │     │  (files)     │
-│  Cursor)   │     │  stdio ─ dashboard   │     └──────────────┘
-└────────────┘     └──────────────────────┘
-```
-
-- **All local.** Every byte lives on your machine. No cloud, no servers, no sync.
-- **Config in** `~/.obsidian-gate/config.json` (mode 0600)
-- **API keys** are local secrets. You own the stack.
-- **Activity log** tracks every agent action in JSONL.
-
----
-
-## What Gate Is Not
-
-- ❌ Not an Obsidian plugin (but a community plugin is planned)
-- ❌ Not a sync engine (reads/writes your vault directory directly)
-- ❌ Not a note editor (Obsidian is better at that)
-- ❌ Not a cloud service (runs entirely on your machine)
-
-It's one small thing done well: an MCP server for your vault.
-
----
-
-## Roadmap
-
-- [x] MCP server with 9 tools
-- [x] Local dashboard + activity log
-- [x] API key auth + permissions
-- [x] Stripe licensing (free + paid tiers)
-- [ ] Obsidian community plugin (one-click install)
-- [ ] Agent write-back with LLM frontmatter
-- [ ] Auto-tagging from vault content
-- [ ] Daily digest: what changed in your vault
+**Nothing happens on mobile.** Gate is desktop-only — Obsidian mobile can't open a local port.
 
 ---
 
 ## Development
 
 ```bash
-git clone https://github.com/rileygramlich/obsidian-gate.git
-cd obsidian-gate
 npm install
-npm run build     # compile TypeScript → dist/
-npm run dev       # hot-reload with tsx
-npm test          # node:test suite
+npm run dev     # esbuild watch → main.js
+npm run build   # typecheck + production bundle
+npm test        # node:test suite
 ```
 
-### Running checkout yourself (vendor setup)
+To try it in a real vault, symlink this folder into `<vault>/.obsidian/plugins/vault-gate` and reload Obsidian.
 
-Only the person selling licenses needs this — end users never touch Stripe.
+The tests cover the parts that don't need an Electron runtime: the markdown and frontmatter helpers, the tool dispatcher and its permission checks, the MCP protocol layer, the HTTP server's auth and origin handling, and the client-config writer. `src/vault.ts` talks to the Obsidian API and is exercised by hand in a vault.
 
-```bash
-# 1. Create the two subscription products. Idempotent, safe to re-run.
-STRIPE_SECRET_KEY=sk_test_... node scripts/create-stripe-products.mjs
+### Layout
 
-# 2. Paste the printed price IDs plus your secret key into .env
-#    STRIPE_SECRET_KEY / STRIPE_PRICE_PERSONAL / STRIPE_PRICE_TEAM
-
-# 3. Start the dashboard and buy from the pricing section
-npm start
 ```
-
-Checkout returns to `/install.html?checkout=success&session_id=...`, which trades
-the session for a license key: the key is minted, written to the subscription's
-`license_key` metadata, and — when you are on the local dashboard — activated on
-the spot. Re-running the same claim returns the same key rather than minting a
-second one. `validateLicense` later re-checks that key against Stripe once a day
-and falls back to the key's own shape when the network is down.
-
-Do the whole loop against a `sk_test_` key first, then re-run step 1 with the
-live key to mirror the products into the live account.
-
-Both products carry a Stripe tax code (downloadable software — Gate installs
-from npm and runs on your own machine, so it is not SaaS). This is required, not
-cosmetic: accounts with Managed Payments enabled reject checkout outright for a
-product with no tax code. Check the codes against your own tax situation before
-you sell in live mode.
+manifest.json      the plugin, as the community store reads it
+src/
+  main.ts          plugin lifecycle, status bar, commands
+  settings-tab.ts  the settings screen
+  wizard.ts        first-run setup
+  server.ts        the localhost HTTP endpoint
+  mcp.ts           MCP over JSON-RPC
+  tools.ts         the nine tools and their permissions
+  vault.ts         vault access through Obsidian's API
+  markdown.ts      frontmatter, links, tags, dates
+server/            standalone CLI version — a separate Node MCP server
+                   that reads a vault off disk. Not needed for the plugin.
+```
 
 ---
 
-Built by [Riley G.](https://github.com/rileygramlich) — ship fast, free tier, zero ad spend, build in public.
+## Releasing
 
-**MIT** — build on it, ship it, sell it.
+```bash
+npm version patch   # updates manifest.json and versions.json too
+git push --follow-tags
+```
+
+The tag triggers `.github/workflows/release.yml`, which builds and attaches `main.js`, `manifest.json`, and `styles.css` to a GitHub release — the layout Obsidian's installer expects.
+
+---
+
+**MIT** — build on it, ship it, sell it. Built by [Riley G.](https://github.com/rileygramlich)

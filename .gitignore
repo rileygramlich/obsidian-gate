@@ -1,5 +1,8 @@
 node_modules/
 dist/
+main.js
+*.js.map
 .env
 *.log
 .DS_Store
+test/.build/

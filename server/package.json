@@ -1,0 +1,64 @@
+{
+  "name": "obsidian-gate",
+  "version": "1.0.0",
+  "description": "MCP server that lets any AI agent read, search, write, and connect notes in your Obsidian vault.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "obsidian-gate": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "public",
+    "examples",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "mcp": "node dist/index.js --mcp",
+    "prepublishOnly": "npm run build && npm test",
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "obsidian",
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "agent",
+    "notes",
+    "claude",
+    "knowledge-base",
+    "markdown",
+    "vault",
+    "note-taking"
+  ],
+  "author": "Riley G.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rileygramlich/obsidian-gate.git"
+  },
+  "homepage": "https://github.com/rileygramlich/obsidian-gate#readme",
+  "bugs": {
+    "url": "https://github.com/rileygramlich/obsidian-gate/issues"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "chokidar": "^5.0.0",
+    "commander": "^15.0.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "stripe": "^22.5.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
+  }
+}

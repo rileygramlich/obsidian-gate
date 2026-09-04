@@ -1,0 +1,48 @@
+name: Release plugin
+
+# Obsidian installs plugins from GitHub release assets, so a tag has to produce
+# main.js, manifest.json and styles.css attached to a release of the same name.
+on:
+  push:
+    tags:
+      - "*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Check the tag matches the manifest
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          MANIFEST=$(node -p "require('./manifest.json').version")
+          if [ "$TAG" != "$MANIFEST" ]; then
+            echo "Tag $TAG does not match manifest version $MANIFEST" >&2
+            exit 1
+          fi
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes \
+            main.js manifest.json styles.css
